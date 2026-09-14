@@ -1,0 +1,26 @@
+{
+  "name": "polar-twin",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Antarctic Research Station Digital Twin & Remote Operations Platform (Maitri & Bharati)",
+  "scripts": {
+    "dev": "node start-dev.js",
+    "dev:backend": "npm --prefix backend run dev",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "seed": "npm --prefix backend run seed",
+    "test": "npm --prefix backend run test",
+    "build": "npm --prefix frontend run build"
+  },
+  "keywords": [
+    "digital-twin",
+    "antarctica",
+    "sih",
+    "iot",
+    "mqtt",
+    "threejs",
+    "react",
+    "nodejs"
+  ],
+  "author": "POLAR TWIN Team",
+  "license": "MIT"
+}

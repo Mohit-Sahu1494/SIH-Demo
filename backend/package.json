@@ -1,0 +1,33 @@
+{
+  "name": "polar-twin-backend",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "POLAR TWIN Backend API, Telemetry Ingestion, Simulator, and Operations Engine",
+  "main": "src/server.js",
+  "scripts": {
+    "dev": "node src/server.js",
+    "start": "node src/server.js",
+    "seed": "node src/seed/seedDatabase.js",
+    "simulator": "node src/simulator/simulator.js",
+    "test": "node --test tests/**/*.test.js"
+  },
+  "dependencies": {
+    "aedes": "^0.51.0",
+    "axios": "^1.20.0",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "express-rate-limit": "^7.3.1",
+    "helmet": "^7.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.5.2",
+    "morgan": "^1.10.0",
+    "mqtt": "^5.8.0",
+    "socket.io": "^4.7.5",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "mongodb-memory-server": "^9.4.0"
+  }
+}
