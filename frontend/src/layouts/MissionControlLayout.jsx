@@ -91,9 +91,6 @@ export function MissionControlLayout() {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-slate-900 flex flex-col font-sans selection:bg-sky-100 selection:text-sky-900">
-      {/* Top Demo Simulation Failure Injection Bar */}
-      <DemoControlBar currentStation={currentStation.name} />
-
       {/* Main Mission Control Header */}
       <MissionControlHeader
         currentStationCode={currentStationCode}
@@ -102,6 +99,7 @@ export function MissionControlLayout() {
         antarcticTime={antarcticTime}
         onStationSwitch={handleStationSwitch}
       />
+
 
       {/* Body container with persistent scientific sidebar */}
       <div className="flex-1 flex overflow-hidden">

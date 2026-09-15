@@ -27,26 +27,6 @@ export function MissionControlHeader({
 
           {/* RIGHT — Telemetry */}
           <div className="flex items-center gap-3 sm:gap-5 text-xs">
-
-            {/* Telemetry Age */}
-            <div className="hidden sm:flex flex-col text-right">
-              <span className="text-slate-700/60 text-[10px] uppercase font-semibold tracking-wide">
-                Telemetry Age
-              </span>
-
-              <span
-                className={`font-mono font-semibold ${
-                  isSatelliteLost
-                    ? 'text-rose-700'
-                    : 'text-slate-800'
-                }`}
-              >
-                {isSatelliteLost
-                  ? '17 min ago (STALE)'
-                  : `Updated ${currentTel?.telemetryAgeSeconds ?? 0}s ago`}
-              </span>
-            </div>
-
             {/* Station Time */}
             <div className="hidden lg:flex flex-col text-right">
               <span className="text-slate-700/60 text-[10px] uppercase font-semibold tracking-wide">
