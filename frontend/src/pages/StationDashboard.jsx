@@ -135,14 +135,9 @@ export function StationDashboard() {
             <h2 className="text-lg font-semibold text-slate-900 tracking-tight">
               Station Systems
             </h2>
-            <p className="text-xs text-slate-500">
-              Primary operational modules ({systems.length} systems registered)
-            </p>
           </div>
 
-          <span className="text-xs text-slate-400 hidden sm:inline">
-            Click any system to view telemetry, dependencies & maintenance history
-          </span>
+        
         </div>
 
         {/* TWO-COLUMN GRID */}

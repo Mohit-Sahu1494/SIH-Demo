@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { Outlet, NavLink, Link, useParams, useNavigate, useLocation } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Outlet, NavLink, useParams, useNavigate, useLocation } from 'react-router-dom';
 import {
   Activity,
   Compass,
@@ -19,14 +19,11 @@ import {
   Cpu,
   TrendingDown,
   Scale,
-  Clock,
   ShieldCheck,
   Building,
-  Ship,
-  Bell,
 } from 'lucide-react';
-import StationSwitcher from '../components/common/StationSwitcher.jsx';
 import DemoControlBar from '../components/common/DemoControlBar.jsx';
+import MissionControlHeader from '../components/common/MissionControlHeader.jsx';
 import telemetryEngine from '../simulation/telemetryEngine.js';
 import { STATIONS } from '../data/stationConfig.js';
 
@@ -88,118 +85,30 @@ export function MissionControlLayout() {
   const currentTel = telemetryState[currentStationCode] || telemetryState.BHT;
   const isSatelliteLost = currentTel?.satellite?.isLost;
 
-  // Dynamically compute active alert count from telemetry state
-  const activeAlertCount = useMemo(() => {
-    let count = 2; // baseline alerts (CHP warning, water consumables)
-    if (currentTel?.injections?.chpFailure) count += 1;
-    if (currentTel?.injections?.pumpFailure) count += 1;
-    if (currentTel?.injections?.satelliteFailure) count += 1;
-    if (currentTel?.injections?.lowFuel) count += 1;
-    return count;
-  }, [currentTel?.injections]);
-
   const handleStationSwitch = (code) => {
     navigate(`/station/${code.toLowerCase()}`);
   };
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-slate-900 flex flex-col font-sans selection:bg-sky-100 selection:text-sky-900">
-      {/* Top Demo Simulation Failure Injection Bar
-      <DemoControlBar currentStation={currentStation.name} /> */}
+      {/* Top Demo Simulation Failure Injection Bar */}
+      <DemoControlBar currentStation={currentStation.name} />
 
       {/* Main Mission Control Header */}
-      <header className="bg-white border-b border-slate-200/90 sticky top-0 z-40">
-        <div className="px-4 sm:px-6 py-2.5 flex items-center justify-between gap-4">
-          {/* Station Switcher + Operational Status */}
-          <div className="flex items-center gap-3">
-            <StationSwitcher
-              currentStationCode={currentStationCode}
-              onSelectStation={handleStationSwitch}
-              status={currentTel?.stationStatus || 'Operational'}
-            />
-
-            <div className="hidden md:flex items-center gap-2 pl-3 border-l border-slate-200 text-xs text-slate-500">
-              <span className="font-mono text-[11px] text-slate-600 font-medium">
-                {currentStation.location.latitude}, {currentStation.location.longitude}
-              </span>
-              <span className="text-slate-300">•</span>
-              <span>{currentStation.waterSource}</span>
-            </div>
-          </div>
-
-          {/* Right Header Status Telemetry */}
-          <div className="flex items-center gap-3 sm:gap-4 text-xs">
-            {/* Quick Operational Alerts Link */}
-            <Link
-              to={`/station/${stationId}/alerts`}
-              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border transition-all ${
-                activeAlertCount > 2
-                  ? 'bg-rose-50 border-rose-300 text-rose-800 animate-pulse'
-                  : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
-              }`}
-              title="View Station Operational Alerts"
-            >
-              <Bell className={`w-3.5 h-3.5 ${activeAlertCount > 2 ? 'text-rose-600' : 'text-slate-500'}`} />
-              <span className="hidden sm:inline font-semibold">Alerts</span>
-              <span
-                className={`text-[10px] font-bold px-1.5 py-0.2 rounded-full font-mono ${
-                  activeAlertCount > 0 ? 'bg-rose-600 text-white' : 'bg-slate-200 text-slate-700'
-                }`}
-              >
-                {activeAlertCount}
-              </span>
-            </Link>
-
-            {/* Last update */}
-            {/* <div className="hidden sm:flex flex-col text-right">
-              <span className="text-slate-400 text-[10px] uppercase font-medium">Telemetry Age</span>
-              <span className={`font-mono font-medium ${isSatelliteLost ? 'text-rose-600 font-bold' : 'text-slate-700'}`}>
-                {isSatelliteLost ? '17 min ago (STALE)' : `Updated ${telemetryState.telemetryAgeSeconds}s ago`}
-              </span>
-            </div> */}
-
-            {/* Antarctic Local Time */}
-            {/* <div className="hidden lg:flex flex-col text-right">
-              <span className="text-slate-400 text-[10px] uppercase font-medium">Station Time</span>
-              <span className="font-mono text-slate-700 font-medium flex items-center gap-1 justify-end">
-                <Clock className="w-3 h-3 text-slate-400" />
-                {antarcticTime}
-              </span>
-            </div> */}
-
-            {/* Satellite Link Status */}
-           {/* <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-md border bg-slate-50 border-slate-200">
-              <span
-                className={`w-2 h-2 rounded-full ${
-                  isSatelliteLost ? 'bg-rose-500 animate-ping' : 'bg-emerald-500'
-                }`}
-              />
-              <div className="flex flex-col leading-tight">
-                <span className="text-[10px] text-slate-400 uppercase font-medium">Satellite Link</span>
-                <span className={`text-xs font-semibold ${isSatelliteLost ? 'text-rose-700' : 'text-slate-800'}`}>
-                  {isSatelliteLost ? 'LOST / OFFLINE' : 'Connected'}
-                </span>
-              </div>
-            </div> */}
-          </div>
-        </div>
-      </header>
+      <MissionControlHeader
+        currentStationCode={currentStationCode}
+        currentStation={currentStation}
+        currentTel={currentTel}
+        antarcticTime={antarcticTime}
+        onStationSwitch={handleStationSwitch}
+      />
 
       {/* Body container with persistent scientific sidebar */}
       <div className="flex-1 flex overflow-hidden">
         {/* Persistent Left Sidebar */}
         <aside className="w-64 bg-white border-r border-slate-200/90 flex flex-col shrink-0 overflow-y-auto">
           {/* Institutional Badge */}
-          <div className="p-4 border-b border-slate-100 flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-sky-800 text-white flex items-center justify-center font-bold text-xs tracking-wider">
-              NCPOR
-            </div>
-            <div className="leading-tight">
-              <div className="text-xs font-semibold text-slate-900 uppercase tracking-tight">Mission Control</div>
-              <div className="text-[11px] text-slate-500">Ministry of Earth Sciences</div>
-            </div>
-          </div>
-
+         
           <nav className="flex-1 p-3 space-y-4 text-xs font-medium text-slate-600">
             {/* 1. Overview */}
             <div>
@@ -404,31 +313,11 @@ export function MissionControlLayout() {
                     }
                   >
                     <span className="flex items-center gap-2">
-                      <AlertTriangle className={`w-3.5 h-3.5 ${activeAlertCount > 2 ? 'text-rose-600 animate-pulse' : 'text-amber-500'}`} />
-                      <span>Alert Center</span>
+                      <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
+                      <span>Alert Center & Why</span>
                     </span>
-                    <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded-full font-mono ${
-                      activeAlertCount > 2 ? 'bg-rose-100 text-rose-800' : 'bg-amber-100 text-amber-900'
-                    }`}>
-                      {activeAlertCount}
-                    </span>
-                  </NavLink>
-
-                  <NavLink
-                    to={`/station/${stationId}/tracking`}
-                    className={({ isActive }) =>
-                      `flex items-center justify-between px-2.5 py-1.5 rounded ${
-                        isActive ? 'text-sky-900 bg-sky-50/70 font-semibold' : 'hover:bg-slate-50 text-slate-600'
-                      }`
-                    }
-                  >
-                    <span className="flex items-center gap-2">
-                      <Ship className="w-3.5 h-3.5 text-sky-700" />
-                      <span>Vessel Tracking</span>
-                    </span>
-                    <span className="text-[9px] font-bold px-1.5 py-0.2 rounded font-mono bg-emerald-100 text-emerald-800 flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                      LIVE
+                    <span className="text-[10px] font-bold px-1.5 py-0.2 rounded-full bg-amber-100 text-amber-900">
+                      3
                     </span>
                   </NavLink>
 

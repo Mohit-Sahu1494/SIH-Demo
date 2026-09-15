@@ -13,8 +13,8 @@ export function DataSourceBadge({ type = 'SIMULATED', customLabel = null, classN
         className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-medium tracking-wide uppercase bg-emerald-50 text-emerald-800 border border-emerald-200/80 ${className}`}
         title="Live atmospheric observational telemetry from NCPOR / IMD station array"
       >
-        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-        {customLabel || 'LIVE · NCPOR'}
+       
+        
       </span>
     );
   }

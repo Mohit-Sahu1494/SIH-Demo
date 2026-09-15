@@ -3,10 +3,9 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 
 // Layouts
 import MissionControlLayout from './layouts/MissionControlLayout.jsx';
+import StationDashboardLayout from './layouts/StationDashboardLayout.jsx';
 
-// Dedicated Mission Control Pages
 import LandingPage from './pages/LandingPage.jsx';
-import StationDashboard from './pages/StationDashboard.jsx';
 import SystemDetailsPage from './pages/SystemDetailsPage.jsx';
 import DependencyMapPage from './pages/DependencyMapPage.jsx';
 import ScenarioSimulatorPage from './pages/ScenarioSimulatorPage.jsx';
@@ -27,12 +26,13 @@ export default function App() {
         {/* 1. First Screen — Station Selection (Bharati or Maitri) */}
         <Route path="/" element={<LandingPage />} />
 
-        {/* 2. Station Remote Operations Mission Control Shell */}
-        <Route path="/station/:stationId" element={<MissionControlLayout />}>
-          {/* Main Station Dashboard Overview */}
-          <Route index element={<StationDashboard />} />
+        {/* Station Dashboard — WITHOUT MissionControlLayout */}
+        <Route path="/station/:stationId" element={<StationDashboardLayout />} />
 
-          {/* Dedicated System Details (e.g. CHP-2, Water Pump) */}
+        {/* Station Remote Operations — WITH MissionControlLayout */}
+        <Route path="/station/:stationId" element={<MissionControlLayout />}>
+          
+          {/* Dedicated System Details */}
           <Route path="systems/:systemId" element={<SystemDetailsPage />} />
 
           {/* Digital Twin Features */}
@@ -45,9 +45,10 @@ export default function App() {
           <Route path="logistics" element={<LogisticsPage />} />
           <Route path="tracking" element={<VesselTrackingPage />} />
           <Route path="environment" element={<EnvironmentHistoricalPage />} />
+
         </Route>
 
-        {/* 3. Global Indian Antarctic Operations Comparison */}
+       
         <Route path="/operations" element={<MissionControlLayout />}>
           <Route path="compare" element={<StationComparisonPage />} />
         </Route>

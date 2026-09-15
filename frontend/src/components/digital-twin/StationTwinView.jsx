@@ -253,7 +253,7 @@ export function StationTwinView({ className = 'h-[540px] w-full' }) {
         );
       })}
 
-      {/* Bottom Mission Control Legend & Status Footer */}
+
       <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between z-20 pointer-events-auto">
         <div className="bg-slate-900/85 backdrop-blur-md px-3 py-1.5 rounded-xl border border-slate-700/80 text-[11px] text-slate-300 flex items-center gap-4">
           <span className="text-slate-400 font-semibold text-[10px] uppercase tracking-wider">Subsystem Status:</span>
