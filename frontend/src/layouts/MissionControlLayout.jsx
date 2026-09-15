@@ -19,12 +19,11 @@ import {
   Cpu,
   TrendingDown,
   Scale,
-  Clock,
   ShieldCheck,
   Building,
 } from 'lucide-react';
-import StationSwitcher from '../components/common/StationSwitcher.jsx';
 import DemoControlBar from '../components/common/DemoControlBar.jsx';
+import MissionControlHeader from '../components/common/MissionControlHeader.jsx';
 import telemetryEngine from '../simulation/telemetryEngine.js';
 import { STATIONS } from '../data/stationConfig.js';
 
@@ -96,53 +95,13 @@ export function MissionControlLayout() {
       <DemoControlBar currentStation={currentStation.name} />
 
       {/* Main Mission Control Header */}
-      <header className="bg-white border-b border-slate-200/90 sticky top-0 z-40">
-        <div className="px-4 sm:px-6 py-2.5 flex items-center justify-between gap-4">
-          {/* Station Switcher + Operational Status */}
-          <div className="flex items-center gap-3">
-            <StationSwitcher
-              currentStationCode={currentStationCode}
-              onSelectStation={handleStationSwitch}
-              status={currentTel?.stationStatus || 'Operational'}
-            />
-          </div>
-
-          {/* Right Header Status Telemetry */}
-          <div className="flex items-center gap-4 sm:gap-6 text-xs">
-            {/* Last update */}
-            <div className="hidden sm:flex flex-col text-right">
-              <span className="text-slate-400 text-[10px] uppercase font-medium">Telemetry Age</span>
-              <span className={`font-mono font-medium ${isSatelliteLost ? 'text-rose-600 font-bold' : 'text-slate-700'}`}>
-                {isSatelliteLost ? '17 min ago (STALE)' : `Updated ${telemetryState.telemetryAgeSeconds}s ago`}
-              </span>
-            </div>
-
-            {/* Antarctic Local Time */}
-            <div className="hidden lg:flex flex-col text-right">
-              <span className="text-slate-400 text-[10px] uppercase font-medium">Station Time</span>
-              <span className="font-mono text-slate-700 font-medium flex items-center gap-1 justify-end">
-                <Clock className="w-3 h-3 text-slate-400" />
-                {antarcticTime}
-              </span>
-            </div>
-
-            {/* Satellite Link Status */}
-            <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-md border bg-slate-50 border-slate-200">
-              <span
-                className={`w-2 h-2 rounded-full ${
-                  isSatelliteLost ? 'bg-rose-500 animate-ping' : 'bg-emerald-500'
-                }`}
-              />
-              <div className="flex flex-col leading-tight">
-                <span className="text-[10px] text-slate-400 uppercase font-medium">Satellite Link</span>
-                <span className={`text-xs font-semibold ${isSatelliteLost ? 'text-rose-700' : 'text-slate-800'}`}>
-                  {isSatelliteLost ? 'LOST / OFFLINE' : 'Connected'}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
+      <MissionControlHeader
+        currentStationCode={currentStationCode}
+        currentStation={currentStation}
+        currentTel={currentTel}
+        antarcticTime={antarcticTime}
+        onStationSwitch={handleStationSwitch}
+      />
 
       {/* Body container with persistent scientific sidebar */}
       <div className="flex-1 flex overflow-hidden">
