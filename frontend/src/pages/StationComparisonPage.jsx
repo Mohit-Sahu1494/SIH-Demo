@@ -1,11 +1,11 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Scale, Building2, ArrowRight } from 'lucide-react';
+import { Scale, ArrowRight, Activity, Radio, Map } from 'lucide-react';
 import StatusBadge from '../components/common/StatusBadge.jsx';
-import DataSourceBadge from '../components/common/DataSourceBadge.jsx';
 import telemetryEngine from '../simulation/telemetryEngine.js';
 import { STATIONS } from '../data/stationConfig.js';
 
+// --- MAIN COMPONENT ---
 export function StationComparisonPage() {
   const navigate = useNavigate();
   const telemetry = telemetryEngine.getState();
@@ -15,134 +15,240 @@ export function StationComparisonPage() {
   const bhtConfig = STATIONS.BHT;
   const mtrConfig = STATIONS.MTR;
 
+  // SAFE Helper to determine cell background (Fixed the .includes error)
+  const getCellBg = (status, val) => {
+    // Exact match for direct status strings
+    if (status === 'Critical') return 'bg-red-50/50';
+    if (status === 'Warning') return 'bg-amber-50/50';
+    
+    // Safe string check for text containing keywords
+    if (typeof val === 'string') {
+      if (val.includes('Critical') || val.includes('Warning')) {
+         return val.includes('Critical') ? 'bg-red-50/50' : 'bg-amber-50/50';
+      }
+    }
+    
+    // Numeric health score checks
+    if (typeof val === 'number') {
+      if (val < 60) return 'bg-red-50/50';
+      if (val < 85) return 'bg-amber-50/50';
+    }
+
+    return 'bg-white';
+  };
+
   const comparisonRows = [
     {
-      metric: 'Operational Status',
-      maitri: <StatusBadge status={mtrTel.stationStatus || 'Operational'} size="sm" />,
-      bharati: <StatusBadge status={bhtTel.stationStatus || 'Operational'} size="sm" />,
+      section: 'Core Telemetry',
+      metrics: [
+        {
+          label: 'Operational Status',
+          mtrVal: mtrTel.stationStatus || 'Operational',
+          bhtVal: bhtTel.stationStatus || 'Operational',
+          renderMtr: <StatusBadge status={mtrTel.stationStatus || 'Operational'} />,
+          renderBht: <StatusBadge status={bhtTel.stationStatus || 'Operational'} />
+        },
+        {
+          label: 'Health Index',
+          mtrVal: mtrTel.healthScore || 91,
+          bhtVal: bhtTel.healthScore || 88,
+          renderMtr: <span className="font-mono text-sm font-bold text-slate-900">{mtrTel.healthScore || 91}%</span>,
+          renderBht: <span className="font-mono text-sm font-bold text-slate-900">{bhtTel.healthScore || 88}%</span>
+        },
+        {
+          label: 'Active Alerts',
+          mtrVal: '1 Advisory',
+          bhtVal: '3 Warnings',
+          renderMtr: <span className="font-mono text-xs font-bold text-slate-700">1 Advisory</span>,
+          renderBht: <span className="font-mono text-xs font-bold text-amber-700">3 Warnings</span>
+        }
+      ]
     },
     {
-      metric: 'Station Health Score',
-      maitri: <span className="font-bold text-slate-900 font-mono">{mtrTel.healthScore || 91}%</span>,
-      bharati: <span className="font-bold text-slate-900 font-mono">{bhtTel.healthScore || 88}%</span>,
+      section: 'Environmental Data',
+      metrics: [
+        {
+          label: 'Outside Temperature',
+          mtrVal: mtrTel.environment?.temperature || -18, 
+          bhtVal: bhtTel.environment?.temperature || -31,
+          renderMtr: <span className="font-mono text-sm font-bold text-slate-800">{mtrTel.environment?.temperature || '-18'}°C</span>,
+          renderBht: <span className="font-mono text-sm font-bold text-slate-800">{bhtTel.environment?.temperature || '-31'}°C</span>
+        },
+        {
+          label: 'Wind Speed',
+          mtrVal: mtrTel.environment?.windSpeed || 12, 
+          bhtVal: bhtTel.environment?.windSpeed || 45,
+          renderMtr: <span className="font-mono text-sm font-semibold text-slate-600">{mtrTel.environment?.windSpeed || '12'} m/s</span>,
+          renderBht: <span className="font-mono text-sm font-semibold text-slate-600">{bhtTel.environment?.windSpeed || '45'} m/s</span>
+        }
+      ]
     },
     {
-      metric: 'Atmospheric Conditions',
-      maitri: <span className="text-slate-700">{mtrTel.environment?.temperature}°C · {mtrTel.environment?.windSpeed} m/s</span>,
-      bharati: <span className="text-slate-700">{bhtTel.environment?.temperature}°C · {bhtTel.environment?.windSpeed} m/s</span>,
+      section: 'Critical Infrastructure',
+      metrics: [
+        {
+          label: 'Primary Power',
+          mtrVal: 'Healthy',
+          bhtVal: bhtTel.injections?.chpFailure ? 'Warning' : 'Healthy',
+          renderMtr: <div className="text-xs font-medium text-slate-700"><span className="block font-bold text-slate-900 mb-1">Diesel Gensets</span> Synchronized (MTR)</div>,
+          renderBht: <div className="text-xs font-medium text-slate-700"><span className="block font-bold text-slate-900 mb-1">3x CHP Units</span> Heat & Power (BHT)</div>
+        },
+        {
+          label: 'Water Sourcing',
+          mtrVal: 'Healthy', 
+          bhtVal: 'Healthy',
+          renderMtr: <span className="text-xs font-medium text-slate-700">Lake Priyadarshini Intake</span>,
+          renderBht: <span className="text-xs font-medium text-slate-700">Sea Water Pump (RO Desalination)</span>
+        },
+        {
+          label: 'Satellite Comm Link',
+          mtrVal: mtrTel.satellite?.isLost ? 'Critical' : 'Healthy',
+          bhtVal: bhtTel.satellite?.isLost ? 'Critical' : 'Healthy',
+          renderMtr: <StatusBadge status={mtrTel.satellite?.isLost ? 'Critical' : 'Healthy'} />,
+          renderBht: <StatusBadge status={bhtTel.satellite?.isLost ? 'Critical' : 'Healthy'} />
+        }
+      ]
     },
     {
-      metric: 'Primary Power Generation',
-      maitri: <span className="text-slate-700">Polar Diesel Gensets (Synchronized)</span>,
-      bharati: <span className="text-slate-700">3x Combined Heat & Power (CHP)</span>,
-    },
-    {
-      metric: 'Power Status',
-      maitri: <StatusBadge status="Healthy" size="sm" />,
-      bharati: <StatusBadge status={bhtTel.injections?.chpFailure ? 'Warning' : 'Healthy'} size="sm" />,
-    },
-    {
-      metric: 'Satellite Link Status',
-      maitri: <StatusBadge status={mtrTel.satellite?.isLost ? 'Critical' : 'Healthy'} size="sm" />,
-      bharati: <StatusBadge status={bhtTel.satellite?.isLost ? 'Critical' : 'Healthy'} size="sm" />,
-    },
-    {
-      metric: 'Active Operational Alerts',
-      maitri: <span className="font-mono font-bold text-slate-800">1 Advisory</span>,
-      bharati: <span className="font-mono font-bold text-amber-900">3 Warnings</span>,
-    },
-    {
-      metric: 'Water Sourcing Infrastructure',
-      maitri: <span className="text-slate-700">Lake Priyadarshini (2.4km heated line)</span>,
-      bharati: <span className="text-slate-700">Sea Water Pump (RO Desalination)</span>,
-    },
-    {
-      metric: 'Fuel Runway Projection',
-      maitri: <span className="font-mono font-bold text-slate-900">{mtrTel.fuel?.runwayDays || 45} days</span>,
-      bharati: <span className="font-mono font-bold text-slate-900">{bhtTel.fuel?.runwayDays || 41} days</span>,
-    },
-    {
-      metric: 'Next Resupply Window',
-      maitri: <span className="font-mono text-slate-700">{mtrConfig.resupply.daysUntilNext} days</span>,
-      bharati: <span className="font-mono text-slate-700">{bhtConfig.resupply.daysUntilNext} days</span>,
-    },
+      section: 'Logistics & Supply',
+      metrics: [
+        {
+          label: 'Fuel Runway Projection',
+          mtrVal: mtrTel.fuel?.runwayDays || 45, 
+          bhtVal: bhtTel.fuel?.runwayDays || 41,
+          renderMtr: <span className="font-mono text-sm font-bold text-slate-900">{mtrTel.fuel?.runwayDays || 45} Days</span>,
+          renderBht: <span className="font-mono text-sm font-bold text-slate-900">{bhtTel.fuel?.runwayDays || 41} Days</span>
+        },
+        {
+          label: 'Next Resupply Window',
+          mtrVal: mtrConfig.resupply?.daysUntilNext || 30, 
+          bhtVal: bhtConfig.resupply?.daysUntilNext || 30,
+          renderMtr: <span className="font-mono text-sm font-bold text-sky-700">T - {mtrConfig.resupply?.daysUntilNext || 30} Days</span>,
+          renderBht: <span className="font-mono text-sm font-bold text-sky-700">T - {bhtConfig.resupply?.daysUntilNext || 30} Days</span>
+        }
+      ]
+    }
   ];
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-              Indian Antarctic Operations
+    <div className="min-h-screen bg-slate-100 p-6 font-sans text-slate-800">
+      <div className="max-w-6xl mx-auto space-y-4">
+        
+        {/* 1. HEADER - FLAT & TECHNICAL */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 border-b border-slate-300 pb-4">
+          <div>
+            <div className="flex items-center gap-2 mb-1.5 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-600" /> GLOBAL INFRASTRUCTURE MATRIX
+            </div>
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
+              <Scale className="w-5 h-5 text-slate-700" /> Station Comparison
             </h1>
-            <DataSourceBadge type="DERIVED" />
+            <p className="text-sm text-slate-600 font-medium mt-1 border-l-2 border-slate-300 pl-2">
+              Live synchronized cross-telemetry from Queen Maud Land and Larsemann Hills.
+            </p>
           </div>
-          <p className="text-xs text-slate-500 mt-1">
-            Comparative operational status between Maitri (Queen Maud Land) and Bharati (Larsemann Hills)
-          </p>
+          
+          <div className="flex items-center gap-2 bg-white border border-slate-300 p-1.5 rounded-sm shadow-sm">
+            <span className="flex items-center gap-1.5 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 border border-emerald-200">
+              <Radio className="w-3 h-3 animate-pulse" /> Sync Active
+            </span>
+          </div>
         </div>
-      </div>
 
-      {/* Comparison Table */}
-      <div className="bg-white rounded-xl border border-slate-200/90 shadow-xs overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-slate-50/80 text-slate-600 font-semibold border-b border-slate-200">
-              <tr>
-                <th className="py-4 px-5 text-slate-500 font-medium">Operational Dimension</th>
-                <th className="py-4 px-5 w-1/3">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="font-bold text-slate-900 text-sm">MAITRI</div>
-                      <div className="text-[11px] text-slate-400 font-normal">Est. 1989 · 70°S</div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => navigate('/station/maitri')}
-                      className="p-1.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors"
-                      title="Open Maitri Mission Control"
-                    >
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </th>
-                <th className="py-4 px-5 w-1/3 border-l border-slate-200">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="font-bold text-slate-900 text-sm">BHARATI</div>
-                      <div className="text-[11px] text-slate-400 font-normal">Est. 2012 · 69°S</div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => navigate('/station/bharati')}
-                      className="p-1.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors"
-                      title="Open Bharati Mission Control"
-                    >
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </th>
+        {/* 2. STATION HEADERS (Direct Access Cards) */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          
+          {/* Maitri Header */}
+          <div className="bg-white border border-slate-300 rounded-sm p-4 flex justify-between items-center shadow-sm">
+            <div>
+              <h2 className="text-lg font-black text-slate-900 tracking-tight flex items-center gap-2">
+                MAITRI <span className="font-mono text-[10px] font-bold bg-slate-100 border border-slate-200 text-slate-500 px-1.5 py-0.5 rounded-sm">MTR</span>
+              </h2>
+              <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest mt-1 flex items-center gap-1">
+                <Map className="w-3 h-3" /> 70°45'S, 11°44'E (Est. 1989)
+              </p>
+            </div>
+            <button 
+              onClick={() => navigate('/station/maitri')}
+              className="px-4 py-2 bg-slate-900 text-white text-[10px] font-bold uppercase tracking-widest rounded-sm hover:bg-slate-800 transition-colors flex items-center gap-2"
+            >
+              Access MTR <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          {/* Bharati Header */}
+          <div className="bg-white border border-slate-300 rounded-sm p-4 flex justify-between items-center shadow-sm">
+            <div>
+              <h2 className="text-lg font-black text-slate-900 tracking-tight flex items-center gap-2">
+                BHARATI <span className="font-mono text-[10px] font-bold bg-slate-100 border border-slate-200 text-slate-500 px-1.5 py-0.5 rounded-sm">BHT</span>
+              </h2>
+              <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest mt-1 flex items-center gap-1">
+                <Map className="w-3 h-3" /> 69°24'S, 76°11'E (Est. 2012)
+              </p>
+            </div>
+            <button 
+              onClick={() => navigate('/station/bharati')}
+              className="px-4 py-2 bg-slate-900 text-white text-[10px] font-bold uppercase tracking-widest rounded-sm hover:bg-slate-800 transition-colors flex items-center gap-2"
+            >
+              Access BHT <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+        </div>
+
+        {/* 3. STRICT COMPARISON GRID */}
+        <div className="bg-white border border-slate-300 rounded-sm shadow-sm overflow-hidden">
+          <table className="w-full text-left text-sm border-collapse">
+            
+            {/* Table Header */}
+            <thead>
+              <tr className="bg-slate-100 border-b border-slate-300 text-[10px] font-bold text-slate-600 uppercase tracking-widest">
+                <th className="px-5 py-3 w-1/3 border-r border-slate-300">Operational Dimension</th>
+                <th className="px-5 py-3 w-1/3 border-r border-slate-300 text-slate-900">Maitri (MTR) Parameter</th>
+                <th className="px-5 py-3 w-1/3 text-slate-900">Bharati (BHT) Parameter</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 text-slate-700">
-              {comparisonRows.map((row, idx) => (
-                <tr key={idx} className="hover:bg-slate-50/60 transition-colors">
-                  <td className="py-3.5 px-5 font-semibold text-slate-800">
-                    {row.metric}
-                  </td>
-                  <td className="py-3.5 px-5">
-                    {row.maitri}
-                  </td>
-                  <td className="py-3.5 px-5 border-l border-slate-100">
-                    {row.bharati}
-                  </td>
-                </tr>
+
+            {/* Table Body - Grouped by Sections */}
+            <tbody className="divide-y divide-slate-200">
+              {comparisonRows.map((group, groupIdx) => (
+                <React.Fragment key={groupIdx}>
+                  
+                  {/* Section Divider */}
+                  <tr className="bg-slate-50 border-y border-slate-200">
+                    <td colSpan="3" className="px-5 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                      <Activity className="w-3 h-3" /> {group.section}
+                    </td>
+                  </tr>
+
+                  {/* Section Rows */}
+                  {group.metrics.map((row, rowIdx) => (
+                    <tr key={rowIdx} className="hover:bg-slate-50/50 transition-colors">
+                      
+                      {/* Dimension Label */}
+                      <td className="px-5 py-4 border-r border-slate-200 align-middle">
+                        <span className="text-xs font-bold text-slate-700">{row.label}</span>
+                      </td>
+
+                      {/* Maitri Cell */}
+                      <td className={`px-5 py-4 border-r border-slate-200 align-middle ${getCellBg(row.mtrVal, row.mtrVal)}`}>
+                        {row.renderMtr}
+                      </td>
+
+                      {/* Bharati Cell */}
+                      <td className={`px-5 py-4 align-middle ${getCellBg(row.bhtVal, row.bhtVal)}`}>
+                        {row.renderBht}
+                      </td>
+
+                    </tr>
+                  ))}
+                </React.Fragment>
               ))}
             </tbody>
+            
           </table>
         </div>
+
       </div>
     </div>
   );

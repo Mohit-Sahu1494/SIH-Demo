@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { 
-  AlertTriangle, ArrowDown, Settings, 
-  ArrowRight, Info, CheckCircle2, RotateCcw
+  AlertTriangle, Settings, ArrowRight, Info, CheckCircle2, 
+  RotateCcw, Activity, ChevronRight, Zap, Droplets, Thermometer, Clock
 } from 'lucide-react';
 
 // --- MOCK DATA STRUCTURE (Unchanged) ---
@@ -119,24 +119,12 @@ const impactScenarios = {
   }
 };
 
-// --- MINIMAL COMPONENTS ---
-
+// --- MINIMAL PREMIUM COMPONENTS ---
 const SectionTitle = ({ children }) => (
-  <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider mb-4 border-b border-slate-200 pb-2">
+  <h3 className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-4 border-b border-slate-100 pb-2">
     {children}
   </h3>
 );
-
-const StatusText = ({ status, text }) => {
-  const colors = {
-    red: 'text-red-600',
-    amber: 'text-amber-600',
-    green: 'text-emerald-600',
-    default: 'text-slate-600'
-  };
-  return <span className={`font-semibold ${colors[status] || colors.default}`}>{text}</span>;
-};
-
 
 export default function ImpactAnalysis() {
   const [station, setStation] = useState('bharati');
@@ -152,200 +140,265 @@ export default function ImpactAnalysis() {
   const handleReset = () => setIsSimulatingFailure(false);
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-slate-800 p-6 font-sans">
-      
-      {/* 1. HEADER & CONTROLS */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Impact Analysis</h1>
-          <p className="text-slate-500 text-sm mt-0.5">Decision support & cascade prediction.</p>
-        </div>
-        <div className="flex gap-3">
-          <select 
-            className="bg-white border border-slate-300 text-sm rounded px-3 py-1.5 shadow-sm outline-none"
-            value={eventId}
-            onChange={(e) => { setEventId(e.target.value); setIsSimulatingFailure(false); }}
-          >
-            <option value="chpOverheat">CHP Overheating</option>
-            <option value="pumpFailure">Pump Failure</option>
-          </select>
-          <select 
-            className="bg-white border border-slate-300 text-sm rounded px-3 py-1.5 shadow-sm outline-none font-medium"
-            value={station}
-            onChange={(e) => { setStation(e.target.value); setIsSimulatingFailure(false); }}
-          >
-            <option value="bharati">Bharati Station</option>
-            <option value="maitri">Maitri Station</option>
-          </select>
-        </div>
-      </div>
-
-      {/* 2. CRITICAL ALERT BANNER (Merged with "Why it matters" to save space) */}
-      <div className={`bg-white border-l-4 ${isSimulatingFailure ? 'border-red-500' : 'border-amber-500'} border-y border-r border-slate-200 rounded-r shadow-sm p-5 mb-6 flex flex-col md:flex-row gap-6`}>
-        <div className="flex-1">
-          <div className="flex items-center gap-2 mb-2">
-            <AlertTriangle className={`w-5 h-5 ${isSimulatingFailure ? 'text-red-500' : 'text-amber-500'}`} />
-            <h2 className="text-lg font-bold text-slate-900 uppercase">
-              {isSimulatingFailure ? scenarioDef.name.replace('Overheating', 'FAILURE') : scenarioDef.name}
-            </h2>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200 ml-2">
-              {scenarioDef.badge}
-            </span>
-          </div>
-          
-          <div className="flex gap-8 text-sm mt-3">
-            <div><span className="text-slate-500">Severity:</span> <StatusText status={isSimulatingFailure ? 'red' : 'amber'} text={isSimulatingFailure ? 'CRITICAL' : scenarioDef.severity} /></div>
-            <div><span className="text-slate-500">Current:</span> <span className="font-semibold">{isSimulatingFailure ? 'OFFLINE' : scenarioDef.currentValue}</span></div>
-            <div><span className="text-slate-500">Normal:</span> <span className="font-semibold">{scenarioDef.normalAssumption}</span></div>
-          </div>
-        </div>
-
-        {/* Minimal 'Why it matters' */}
-        <div className="flex-1 border-l border-slate-100 pl-6 hidden md:block">
-          <h4 className="text-xs font-bold text-slate-500 uppercase mb-2 flex items-center gap-1">
-            <Info className="w-3.5 h-3.5" /> Context
-          </h4>
-          <ul className="text-sm text-slate-600 list-disc pl-4 space-y-1">
-            {scenarioDef.whyMatters.map((point, idx) => <li key={idx}>{point}</li>)}
-          </ul>
-        </div>
-      </div>
-
-      {/* 3. MAIN DASHBOARD COLUMNS */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+    <div className="min-h-screen bg-[#F1F5F9] text-slate-800 p-4 md:p-6 font-sans">
+      <div className="max-w-6xl mx-auto space-y-5">
         
-        {/* LEFT COL: Propagation Flow */}
-        <div className="bg-white border border-slate-200 rounded p-5 shadow-sm">
-          <SectionTitle>Event Propagation Flow</SectionTitle>
-          
-          <div className="flex flex-col ml-2 mt-4 space-y-3 relative">
-            {/* Very minimal timeline/flow line */}
-            <div className="absolute left-[7px] top-2 bottom-2 w-px bg-slate-200 z-0"></div>
+        {/* 1. PREMIUM HEADER & CONTROLS */}
+        <div className="bg-white rounded-xl border border-slate-200/80 shadow-sm p-5 md:p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 relative overflow-hidden">
+          {/* Background Watermark */}
+          <div className="absolute -right-12 -top-12 opacity-[0.03] pointer-events-none">
+            <Activity className="w-64 h-64 text-slate-900" />
+          </div>
 
-            {/* Root Cause (Hardcoded minimalist example) */}
-            <div className="relative z-10 pl-6">
-              <div className="absolute left-0 top-1.5 w-4 h-4 rounded-full bg-slate-100 border-2 border-slate-300"></div>
-              <p className="text-sm text-slate-500">Outside Temp Drop (-31°C) → Heating Demand (+23%)</p>
+          <div className="relative z-10">
+            <nav className="flex items-center gap-1.5 text-[11px] uppercase tracking-widest text-slate-400 font-bold mb-3">
+              <span className="text-slate-500">Digital Twin</span>
+              <ChevronRight className="w-3 h-3 opacity-50" />
+              <span className="text-slate-700">Impact Analysis</span>
+            </nav>
+            <div className="flex items-center gap-3">
+              <h1 className="text-3xl font-black tracking-tight text-slate-900">Cascade Prediction</h1>
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-100">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-widest">Live Engine</span>
+              </div>
+            </div>
+            <p className="text-sm text-slate-500 font-medium mt-1">Simulate and evaluate equipment failure propagation.</p>
+          </div>
+
+          <div className="relative z-10 flex flex-col sm:flex-row gap-3 bg-slate-50 border border-slate-100 rounded-lg p-2.5">
+            <div>
+              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1 px-1">Target Station</p>
+              <select 
+                className="bg-white border border-slate-200 text-sm font-semibold text-slate-700 rounded-md px-3 py-1.5 shadow-sm outline-none focus:ring-2 focus:ring-sky-100 w-full sm:w-40"
+                value={station}
+                onChange={(e) => { setStation(e.target.value); setIsSimulatingFailure(false); }}
+              >
+                <option value="bharati">Bharati (BHT)</option>
+                <option value="maitri">Maitri (MTR)</option>
+              </select>
+            </div>
+            <div className="hidden sm:block w-px bg-slate-200 mx-1"></div>
+            <div>
+              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1 px-1">Scenario Event</p>
+              <select 
+                className="bg-white border border-slate-200 text-sm font-semibold text-slate-700 rounded-md px-3 py-1.5 shadow-sm outline-none focus:ring-2 focus:ring-sky-100 w-full sm:w-56"
+                value={eventId}
+                onChange={(e) => { setEventId(e.target.value); setIsSimulatingFailure(false); }}
+              >
+                <option value="chpOverheat">CHP Thermal Overload</option>
+                <option value="pumpFailure">Pump Flow Failure</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* 2. CRITICAL ALERT BANNER */}
+        <div className={`bg-white rounded-xl border border-slate-200/80 shadow-sm overflow-hidden flex flex-col md:flex-row transition-all duration-300 ${
+          isSimulatingFailure ? 'shadow-[inset_4px_0_0_#ef4444]' : 'shadow-[inset_4px_0_0_#f59e0b]'
+        }`}>
+          <div className="p-5 md:p-6 flex-1">
+            <div className="flex items-center gap-3 mb-3">
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                isSimulatingFailure ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-amber-50 text-amber-600 border border-amber-100'
+              }`}>
+                <AlertTriangle className="w-5 h-5" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-slate-900 leading-tight">
+                  {isSimulatingFailure ? scenarioDef.name.replace('Overheating', 'CRITICAL FAILURE') : scenarioDef.name}
+                </h2>
+                <span className="font-mono text-[10px] font-bold text-slate-400 uppercase tracking-widest">{scenarioDef.id}</span>
+              </div>
             </div>
             
-            {/* Impact Chain mapping */}
-            {activeState.impactChain?.map((node, idx) => (
-              <div key={idx} className="relative z-10 pl-6">
-                <div className={`absolute left-0 top-1.5 w-4 h-4 rounded-full border-2 bg-white ${
-                  node.status === 'red' ? 'border-red-500' : 
-                  node.status === 'amber' ? 'border-amber-500' : 'border-slate-300'
-                }`}></div>
-                <p className={`text-sm font-medium ${node.status === 'red' ? 'text-red-700' : node.status === 'amber' ? 'text-amber-700' : 'text-slate-800'}`}>
-                  {node.label}
-                </p>
+            <div className="flex flex-wrap gap-x-8 gap-y-4 text-sm mt-4 bg-slate-50 border border-slate-100 rounded-lg p-4">
+              <div>
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-0.5">Severity</span> 
+                <span className={`font-bold px-2 py-0.5 rounded text-xs uppercase tracking-wider ${
+                  isSimulatingFailure ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'
+                }`}>
+                  {isSimulatingFailure ? 'CRITICAL' : scenarioDef.severity}
+                </span>
               </div>
-            ))}
+              <div>
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-0.5">Current Output</span> 
+                <span className={`font-mono text-lg font-bold ${isSimulatingFailure ? 'text-red-600' : 'text-slate-800'}`}>
+                  {isSimulatingFailure ? 'OFFLINE' : scenarioDef.currentValue}
+                </span>
+              </div>
+              <div>
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-0.5">Normal Range</span> 
+                <span className="font-mono text-sm font-semibold text-slate-600 mt-1 block">{scenarioDef.normalAssumption}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Context / Why it matters */}
+          <div className="bg-slate-50 border-t md:border-t-0 md:border-l border-slate-100 p-5 md:p-6 w-full md:w-80 shrink-0">
+            <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-1.5">
+              <Info className="w-3.5 h-3.5" /> Operational Context
+            </h4>
+            <ul className="text-sm text-slate-700 font-medium space-y-2 leading-relaxed">
+              {scenarioDef.whyMatters.map((point, idx) => (
+                <li key={idx} className="flex items-start gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-sky-400 mt-1.5 shrink-0" /> {point}
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
 
-        {/* RIGHT COL: Subsystem Impact & Metrics */}
-        <div className="flex flex-col gap-6">
+        {/* 3. MAIN DASHBOARD COLUMNS */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
           
-          <div className="bg-white border border-slate-200 rounded p-5 shadow-sm">
-            <SectionTitle>Affected Subsystems</SectionTitle>
-            <div className="space-y-3 mt-4">
-              {activeState.affectedSystems?.map((sys, idx) => (
-                <div key={idx} className="flex justify-between items-start border-b border-slate-50 pb-2 last:border-0">
-                  <div>
-                    <p className="text-sm font-semibold text-slate-800">{sys.name}</p>
-                    <p className="text-xs text-slate-500">{sys.reason}</p>
-                  </div>
-                  <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded ${
-                    sys.risk === 'Critical' ? 'text-red-700 bg-red-50' :
-                    sys.risk === 'High' ? 'text-amber-700 bg-amber-50' : 'text-slate-600 bg-slate-100'
+          {/* LEFT COL: Propagation Flow */}
+          <div className="bg-white rounded-xl border border-slate-200/80 shadow-sm p-6">
+            <SectionTitle>Event Propagation Map</SectionTitle>
+            
+            <div className="relative pl-4 mt-6 space-y-6">
+              {/* Timeline Track */}
+              <div className="absolute left-[19px] top-2 bottom-2 w-0.5 bg-slate-100 z-0"></div>
+
+              {/* Root Cause */}
+              <div className="relative z-10 flex items-start gap-4">
+                <div className="w-6 h-6 rounded-full bg-slate-100 border-2 border-slate-300 flex items-center justify-center shrink-0 shadow-sm">
+                  <Thermometer className="w-3 h-3 text-slate-500" />
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Root Catalyst</p>
+                  <p className="text-sm font-bold text-slate-800">Outside Temp (-31°C) → Heating Demand (+23%)</p>
+                </div>
+              </div>
+              
+              {/* Impact Nodes */}
+              {activeState.impactChain?.map((node, idx) => (
+                <div key={idx} className="relative z-10 flex items-start gap-4">
+                  <div className={`w-6 h-6 rounded-full bg-white border-2 flex items-center justify-center shrink-0 shadow-sm mt-0.5 ${
+                    node.status === 'red' ? 'border-red-500 shadow-red-100' : 
+                    node.status === 'amber' ? 'border-amber-500 shadow-amber-100' : 'border-slate-300'
                   }`}>
-                    {sys.risk}
-                  </span>
+                    <div className={`w-2 h-2 rounded-full ${node.status === 'red' ? 'bg-red-500' : node.status === 'amber' ? 'bg-amber-500' : 'bg-slate-300'}`} />
+                  </div>
+                  <div>
+                    <p className={`text-sm font-bold leading-tight ${node.status === 'red' ? 'text-red-700' : node.status === 'amber' ? 'text-amber-700' : 'text-slate-800'}`}>
+                      {node.label}
+                    </p>
+                  </div>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="bg-white border border-slate-200 rounded p-5 shadow-sm">
-            <SectionTitle>Metrics Shift</SectionTitle>
-            <table className="w-full text-sm mt-2">
-              <tbody>
-                {activeState.beforeAfter?.map((row, idx) => (
-                  <tr key={idx} className="border-b border-slate-100 last:border-0">
-                    <td className="py-2 text-slate-500 w-1/3">{row.metric}</td>
-                    <td className="py-2 text-slate-800 font-medium w-1/3">{row.current}</td>
-                    <td className="py-2 w-8"><ArrowRight className="w-4 h-4 text-slate-300 mx-auto" /></td>
-                    <td className={`py-2 font-semibold w-1/3 text-right ${isSimulatingFailure ? 'text-red-600' : 'text-amber-600'}`}>
-                      {row.after}
-                    </td>
-                  </tr>
+          {/* RIGHT COL: Subsystem Impact & Metrics */}
+          <div className="flex flex-col gap-5">
+            
+            {/* Affected Subsystems */}
+            <div className="bg-white rounded-xl border border-slate-200/80 shadow-sm p-6">
+              <SectionTitle>Affected Subsystems</SectionTitle>
+              <div className="space-y-3 mt-4">
+                {activeState.affectedSystems?.map((sys, idx) => (
+                  <div key={idx} className="flex justify-between items-start p-3 bg-slate-50 border border-slate-100 rounded-lg">
+                    <div>
+                      <p className="text-sm font-bold text-slate-800">{sys.name}</p>
+                      <p className="text-xs font-medium text-slate-500 mt-0.5">{sys.reason}</p>
+                    </div>
+                    <span className={`text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded border ${
+                      sys.risk === 'Critical' ? 'text-red-700 bg-red-50 border-red-200' :
+                      sys.risk === 'High' ? 'text-amber-700 bg-amber-50 border-amber-200' : 'text-slate-600 bg-slate-100 border-slate-200'
+                    }`}>
+                      {sys.risk}
+                    </span>
+                  </div>
                 ))}
-              </tbody>
-            </table>
+              </div>
+            </div>
+
+            {/* Metrics Shift */}
+            <div className="bg-white rounded-xl border border-slate-200/80 shadow-sm p-6">
+              <SectionTitle>Metrics Displacement</SectionTitle>
+              <table className="w-full text-sm mt-2">
+                <tbody className="divide-y divide-slate-100">
+                  {activeState.beforeAfter?.map((row, idx) => (
+                    <tr key={idx} className="hover:bg-slate-50 transition-colors">
+                      <td className="py-3 text-slate-500 font-semibold w-1/3 text-xs uppercase tracking-wider">{row.metric}</td>
+                      <td className="py-3 text-slate-800 font-mono font-bold w-1/3">{row.current}</td>
+                      <td className="py-3 w-8 text-center"><ArrowRight className="w-4 h-4 text-slate-300 inline-block" /></td>
+                      <td className={`py-3 font-mono font-bold w-1/3 text-right ${isSimulatingFailure ? 'text-red-600' : 'text-amber-600'}`}>
+                        {row.after}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
           </div>
-
         </div>
-      </div>
 
-      {/* 4. ACTIONS & TIMELINE */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        
-        {/* Recommended Actions - Minimal List */}
-        <div className="bg-white border border-slate-200 rounded p-5 shadow-sm">
-          <SectionTitle>Recommended Actions</SectionTitle>
-          <div className="space-y-4 mt-4">
-            {activeState.actions?.map((act, idx) => (
-              <div key={idx} className="flex gap-3 items-start">
-                <span className={`text-xs font-bold px-1.5 py-0.5 rounded-sm mt-0.5 ${
-                  act.p === 'P1' ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-600'
-                }`}>
-                  {act.p}
-                </span>
-                <div>
-                  <p className="text-sm font-semibold text-slate-800">{act.action}</p>
-                  <p className="text-xs text-slate-500">{act.reason}</p>
+        {/* 4. ACTIONS & TIMELINE */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-6">
+          
+          {/* Recommended Actions */}
+          <div className="bg-white rounded-xl border border-slate-200/80 shadow-sm p-6">
+            <SectionTitle>Standard Operating Procedures</SectionTitle>
+            <div className="space-y-4 mt-4">
+              {activeState.actions?.map((act, idx) => (
+                <div key={idx} className="flex gap-4 items-start">
+                  <span className={`text-[10px] font-bold px-2 py-1 rounded mt-0.5 border ${
+                    act.p === 'P1' ? 'bg-red-50 text-red-700 border-red-200' : 'bg-slate-100 text-slate-600 border-slate-200'
+                  }`}>
+                    {act.p}
+                  </span>
+                  <div>
+                    <p className="text-sm font-bold text-slate-800">{act.action}</p>
+                    <p className="text-xs font-medium text-slate-500 mt-1 leading-relaxed">{act.reason}</p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
+
+          {/* Projected Timeline */}
+          <div className="bg-white rounded-xl border border-slate-200/80 shadow-sm p-6">
+            <SectionTitle>Projection Timeline</SectionTitle>
+            <div className="space-y-4 mt-4">
+              {activeState.timeline?.map((item, idx) => (
+                <div key={idx} className="flex gap-4 items-center p-3 bg-slate-50 border border-slate-100 rounded-lg">
+                  <div className="flex items-center gap-1.5 w-20 shrink-0">
+                    <Clock className="w-3.5 h-3.5 text-slate-400" />
+                    <span className="font-mono text-xs font-bold text-slate-600">{item.time}</span>
+                  </div>
+                  <p className={`text-sm font-bold ${item.status === 'red' ? 'text-red-600' : 'text-slate-800'}`}>
+                    {item.event}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+
         </div>
 
-        {/* Projected Timeline */}
-        <div className="bg-white border border-slate-200 rounded p-5 shadow-sm">
-          <SectionTitle>Projected Timeline</SectionTitle>
-          <div className="space-y-4 mt-4">
-            {activeState.timeline?.map((item, idx) => (
-              <div key={idx} className="flex gap-4 items-center border-b border-slate-50 pb-2 last:border-0">
-                <span className="text-xs font-bold text-slate-400 w-16 shrink-0">{item.time}</span>
-                <p className={`text-sm font-medium ${item.status === 'red' ? 'text-red-600' : 'text-slate-700'}`}>
-                  {item.event}
-                </p>
-              </div>
-            ))}
-          </div>
+        {/* 5. SIMULATION CONTROLS */}
+        <div className="flex items-center gap-4 mt-6 pt-4">
+          {!isSimulatingFailure ? (
+            <button 
+              onClick={handleSimulate}
+              className="px-6 py-3 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs uppercase tracking-widest rounded-xl transition-colors flex items-center gap-2 shadow-md"
+            >
+              <Settings className="w-4 h-4" /> Run Failure Simulation
+            </button>
+          ) : (
+            <button 
+              onClick={handleReset}
+              className="px-6 py-3 border border-slate-300 hover:bg-slate-100 text-slate-700 font-bold text-xs uppercase tracking-widest rounded-xl transition-colors flex items-center gap-2 bg-white shadow-sm"
+            >
+               <RotateCcw className="w-4 h-4" /> Reset Environment
+            </button>
+          )}
         </div>
 
       </div>
-
-      {/* 5. SIMULATION CONTROLS */}
-      <div className="flex items-center gap-4 mt-8 pt-4 border-t border-slate-200">
-        {!isSimulatingFailure ? (
-          <button 
-            onClick={handleSimulate}
-            className="px-5 py-2 bg-slate-800 hover:bg-slate-900 text-white font-medium text-sm rounded transition-colors flex items-center gap-2 shadow-sm"
-          >
-            <Settings className="w-4 h-4" /> Simulate Failure Pattern
-          </button>
-        ) : (
-          <button 
-            onClick={handleReset}
-            className="px-5 py-2 border border-slate-300 hover:bg-slate-50 text-slate-700 font-medium text-sm rounded transition-colors flex items-center gap-2 bg-white shadow-sm"
-          >
-             <RotateCcw className="w-4 h-4" /> Reset Scenario
-          </button>
-        )}
-      </div>
-
     </div>
   );
 }

@@ -1,23 +1,12 @@
 import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import {
-  GitFork,
-  AlertTriangle,
-  ShieldCheck,
-  Zap,
-  Flame,
-  Droplets,
-  Radio,
-  Building2,
-  FlaskConical,
-  Snowflake,
+  GitFork, ShieldCheck, Zap, Flame, Droplets, Radio, 
+  Building2, FlaskConical, Snowflake, ArrowDown, Activity
 } from 'lucide-react';
 import StatusBadge from '../components/common/StatusBadge.jsx';
-import DataSourceBadge from '../components/common/DataSourceBadge.jsx';
 import { STATIONS } from '../data/stationConfig.js';
-import telemetryEngine from '../simulation/telemetryEngine.js';
 
-// Maps a node's id/category to a representative icon for the card.
 function getNodeIcon(node) {
   const key = `${node.id} ${node.category}`.toLowerCase();
   if (key.includes('fuel')) return Flame;
@@ -38,7 +27,6 @@ export function DependencyMapPage() {
 
   const [selectedNodeId, setSelectedNodeId] = useState(isBharati ? 'chp-2' : 'power-system');
 
-  // Dependency network graph definition
   const nodes = isBharati
     ? [
         { id: 'fuel-farm', name: 'Automated Fuel Farm', category: 'Fuel Source', tier: 1, downstream: ['chp-1', 'chp-2', 'chp-3'], status: 'Healthy' },
@@ -91,149 +79,167 @@ export function DependencyMapPage() {
 
   const cascadeAffectedIds = getDownstreamCascade(selectedNode.id);
   const affectedCount = cascadeAffectedIds.length;
-  const riskLevel = affectedCount >= 4 ? 'High' : affectedCount >= 2 ? 'Medium' : 'Low';
+  const riskLevel = affectedCount >= 4 ? 'Critical' : affectedCount >= 2 ? 'High' : affectedCount === 1 ? 'Moderate' : 'None';
 
-  const riskChipClass =
-    riskLevel === 'High'
-      ? 'bg-rose-50 text-rose-800 border-rose-200'
-      : riskLevel === 'Medium'
-      ? 'bg-amber-50 text-amber-800 border-amber-200'
-      : 'bg-emerald-50 text-emerald-800 border-emerald-200';
+  // Group nodes by Tier for the visual flow
+  const nodesByTier = nodes.reduce((acc, node) => {
+    if (!acc[node.tier]) acc[node.tier] = [];
+    acc[node.tier].push(node);
+    return acc;
+  }, {});
 
-  // Sort nodes by tier so the flowing grid still reads upstream → downstream
-  const orderedNodes = [...nodes].sort((a, b) => a.tier - b.tier);
+  const maxTier = Math.max(...Object.keys(nodesByTier).map(Number));
 
   return (
-    <div className="max-w-6xl mx-auto px-3 sm:px-4 pb-10 space-y-4">
-      {/* Header */}
-      <div className="pt-3 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl font-bold text-slate-900">Dependency Map</h1>
-            <DataSourceBadge type="DERIVED" />
+    <div className="min-h-screen bg-slate-100 p-6 font-sans text-slate-800">
+      <div className="max-w-6xl mx-auto space-y-6">
+        
+        {/* 1. FLAT TECHNICAL HEADER */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 border-b border-slate-300 pb-4">
+          <div>
+            <div className="flex items-center gap-2 mb-1.5 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-600" /> CASCADE ANALYSIS
+            </div>
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
+              <GitFork className="w-5 h-5 text-slate-700" /> Infrastructure Dependency Map
+            </h1>
+            <p className="text-sm text-slate-600 font-medium mt-1 border-l-2 border-slate-300 pl-2">
+              Select any system node to trace downstream failure impact across the {station.name} facility.
+            </p>
           </div>
-          <p className="text-xs text-slate-500 mt-0.5 max-w-md">
-            Tap a component to trace what it powers, and what fails if it goes down
-          </p>
+          
+          <div className="flex items-center gap-4 text-[10px] font-bold uppercase tracking-wider bg-white border border-slate-300 p-2 rounded-sm shadow-sm">
+            <div className="flex items-center gap-1.5 text-slate-600">
+              <div className="w-3 h-3 bg-blue-600 border border-blue-700 rounded-sm"></div> Selected Source
+            </div>
+            <div className="flex items-center gap-1.5 text-slate-600">
+              <div className="w-3 h-3 bg-amber-100 border border-amber-400 rounded-sm"></div> Downstream Impact
+            </div>
+          </div>
         </div>
 
-        <div className="flex items-center gap-4 text-[11px] shrink-0">
-          <div className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-sky-500" />
-            <span className="text-slate-500">Selected</span>
+        {/* 2. SELECTED NODE INSIGHTS (Flat Panel) */}
+        <div className="bg-white border border-slate-300 rounded-sm shadow-sm p-4 flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="flex items-center gap-4 w-full md:w-auto">
+            <div className="w-12 h-12 bg-slate-100 border border-slate-200 flex items-center justify-center shrink-0">
+              {React.createElement(getNodeIcon(selectedNode), { className: "w-6 h-6 text-slate-700" })}
+            </div>
+            <div>
+              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-0.5">Simulating Failure For</p>
+              <h2 className="text-lg font-bold text-slate-900 leading-tight">{selectedNode.name}</h2>
+              <p className="text-xs font-mono text-slate-500">{selectedNode.id.toUpperCase()} · Tier {selectedNode.tier}</p>
+            </div>
           </div>
-          <div className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-amber-400" />
-            <span className="text-slate-500">Affected</span>
+
+          <div className="flex gap-4 w-full md:w-auto md:border-l border-slate-200 md:pl-6">
+            <div>
+              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Impact Radius</p>
+              <p className="font-mono text-xl font-bold text-slate-800">{affectedCount} <span className="text-xs font-sans text-slate-500">Systems</span></p>
+            </div>
+            <div>
+              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Cascade Risk</p>
+              <span className={`inline-block px-2.5 py-0.5 text-xs font-bold uppercase tracking-wider border rounded-sm ${
+                riskLevel === 'Critical' ? 'bg-red-50 text-red-700 border-red-300' :
+                riskLevel === 'High' ? 'bg-amber-50 text-amber-700 border-amber-300' :
+                riskLevel === 'Moderate' ? 'bg-yellow-50 text-yellow-700 border-yellow-300' :
+                'bg-emerald-50 text-emerald-700 border-emerald-300'
+              }`}>
+                {riskLevel}
+              </span>
+            </div>
+          </div>
+
+          <div className="w-full md:w-1/3 bg-slate-50 border border-slate-200 p-3 text-xs text-slate-600 font-medium">
+            {affectedCount > 0 ? (
+              <span>
+                <strong>System Failure Simulation:</strong> Dropping this node will inherently cause failure in: <span className="font-bold text-amber-700">{cascadeAffectedIds.map((id) => nodes.find((n) => n.id === id)?.name).join(', ')}</span>.
+              </span>
+            ) : (
+              <span className="flex items-center gap-2 text-emerald-700">
+                <ShieldCheck className="w-4 h-4 shrink-0" />
+                Terminal node. Failure is isolated and does not cascade to other subsystems.
+              </span>
+            )}
           </div>
         </div>
-      </div>
 
-      {/* Flowing node grid, ordered upstream → downstream by tier */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-        {orderedNodes.map((node) => {
-          const isSelected = node.id === selectedNodeId;
-          const isAffected = cascadeAffectedIds.includes(node.id);
-          const Icon = getNodeIcon(node);
+        {/* 3. THE LOGICAL CASCADE MAP */}
+        <div className="bg-white border border-slate-300 rounded-sm shadow-sm p-8 overflow-x-auto">
+          <div className="min-w-[700px] flex flex-col items-center">
+            
+            {Array.from({ length: maxTier }, (_, i) => i + 1).map((tier) => {
+              const tierNodes = nodesByTier[tier] || [];
+              if (tierNodes.length === 0) return null;
 
-          return (
-            <button
-              key={node.id}
-              onClick={() => setSelectedNodeId(node.id)}
-              className={`text-left rounded-2xl border p-3.5 transition-all duration-200 cursor-pointer ${
-                isSelected
-                  ? 'bg-gradient-to-br from-sky-50 to-white border-sky-400 shadow-md shadow-sky-100'
-                  : isAffected
-                  ? 'bg-gradient-to-br from-amber-50 to-white border-amber-300 shadow-sm'
-                  : 'bg-white border-slate-200 shadow-sm hover:border-slate-300 hover:shadow-md'
-              } ${isSelected ? 'col-span-2 sm:col-span-3 lg:col-span-4' : ''}`}
-            >
-              <div className="flex items-start justify-between gap-2">
-                <div
-                  className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
-                    isSelected
-                      ? 'bg-sky-600 text-white'
-                      : isAffected
-                      ? 'bg-amber-100 text-amber-700'
-                      : 'bg-slate-100 text-slate-500'
-                  }`}
-                >
-                  <Icon className="w-4.5 h-4.5" />
-                </div>
-                <StatusBadge status={node.status} size="sm" />
-              </div>
-
-              <div className="mt-2.5">
-                <div className="text-sm font-bold text-slate-900 leading-snug">{node.name}</div>
-                <div className="flex items-center gap-1.5 mt-0.5 text-[11px] text-slate-400">
-                  <span>Tier {node.tier}</span>
-                  <span>·</span>
-                  <span className="truncate">{node.category}</span>
-                </div>
-              </div>
-
-              {/* Inline expanding detail, only on the selected card */}
-              <div
-                className={`grid transition-all duration-300 ease-out ${
-                  isSelected ? 'grid-rows-[1fr] opacity-100 mt-3.5' : 'grid-rows-[0fr] opacity-0'
-                }`}
-              >
-                <div className="overflow-hidden">
-                  <div className="pt-3.5 border-t border-sky-100 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6">
-                    <div className="flex items-center gap-6">
-                      <div>
-                        <div className="text-[10px] uppercase tracking-wide text-slate-400 font-semibold">
-                          Affected subsystems
-                        </div>
-                        <div className="text-xl font-bold text-slate-900 mt-0.5">{affectedCount}</div>
-                      </div>
-                      <div>
-                        <div className="text-[10px] uppercase tracking-wide text-slate-400 font-semibold">
-                          Cascade risk
-                        </div>
-                        <span
-                          className={`inline-block mt-1 px-2.5 py-1 rounded-lg text-xs font-semibold border ${riskChipClass}`}
-                        >
-                          {riskLevel}
-                        </span>
-                      </div>
+              return (
+                <React.Fragment key={`tier-${tier}`}>
+                  
+                  {/* Tier Row Container */}
+                  <div className="w-full relative py-2">
+                    {/* Background Tier Label */}
+                    <div className="absolute left-0 top-1/2 -translate-y-1/2 flex items-center gap-2 text-slate-300">
+                      <span className="font-mono text-[10px] font-bold uppercase tracking-widest border border-slate-200 px-1 py-0.5">Tier {tier}</span>
+                      <div className="w-8 h-px bg-slate-200"></div>
                     </div>
 
-                    {affectedCount > 0 ? (
-                      <div className="flex items-start gap-2 text-xs text-slate-600 flex-1">
-                        <GitFork className="w-3.5 h-3.5 text-slate-400 shrink-0 mt-0.5" />
-                        <span>
-                          A failure here cascades to{' '}
-                          {cascadeAffectedIds
-                            .map((id) => nodes.find((n) => n.id === id)?.name)
-                            .filter(Boolean)
-                            .join(', ')}
-                          .
-                        </span>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-2 text-xs text-emerald-700">
-                        <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
-                        <span>Terminal node — no downstream dependents.</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </button>
-          );
-        })}
-      </div>
+                    <div className="flex justify-center gap-4 flex-wrap pl-20 pr-4">
+                      {tierNodes.map((node) => {
+                        const isSelected = node.id === selectedNodeId;
+                        const isAffected = cascadeAffectedIds.includes(node.id);
+                        const Icon = getNodeIcon(node);
 
-      {selectedNode.status === 'Warning' && (
-        <div className="flex items-start gap-2.5 px-4 py-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900">
-          <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-          <span>
-            <strong>{selectedNode.name}</strong> is currently flagged Warning — cascade risk should be treated
-            as elevated beyond the static estimate above.
-          </span>
+                        return (
+                          <button
+                            key={node.id}
+                            onClick={() => setSelectedNodeId(node.id)}
+                            className={`flex items-center gap-3 p-3 w-56 text-left border rounded-sm transition-all duration-150 ${
+                              isSelected
+                                ? 'bg-blue-600 border-blue-700 text-white shadow-md scale-[1.02]'
+                                : isAffected
+                                ? 'bg-amber-50 border-amber-400 shadow-sm shadow-amber-100'
+                                : 'bg-white border-slate-300 hover:border-blue-400 hover:bg-slate-50'
+                            }`}
+                          >
+                            <div className={`w-8 h-8 flex items-center justify-center shrink-0 border ${
+                              isSelected ? 'bg-blue-700 border-blue-500 text-white' : 
+                              isAffected ? 'bg-amber-100 border-amber-300 text-amber-700' : 'bg-slate-100 border-slate-200 text-slate-500'
+                            }`}>
+                              <Icon className="w-4 h-4" />
+                            </div>
+                            <div className="overflow-hidden">
+                              <p className={`text-xs font-bold truncate ${isSelected ? 'text-white' : 'text-slate-800'}`}>
+                                {node.name}
+                              </p>
+                              <div className="flex items-center gap-1.5 mt-0.5">
+                                <span className={`text-[9px] uppercase tracking-widest font-bold ${isSelected ? 'text-blue-200' : 'text-slate-400'}`}>
+                                  {node.category}
+                                </span>
+                              </div>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Flow Arrows between Tiers */}
+                  {tier < maxTier && (
+                    <div className="py-3 flex justify-center w-full">
+                      <div className="flex flex-col items-center">
+                        <div className="w-px h-6 bg-slate-300"></div>
+                        <ArrowDown className="w-4 h-4 text-slate-400 -mt-1" />
+                      </div>
+                    </div>
+                  )}
+
+                </React.Fragment>
+              );
+            })}
+
+          </div>
         </div>
-      )}
+
+      </div>
     </div>
   );
 }
