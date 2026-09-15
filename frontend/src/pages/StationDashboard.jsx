@@ -1,21 +1,22 @@
 import React from 'react';
-import { useNavigate, useOutletContext, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
+
 import EnvironmentHero from '../components/dashboard/EnvironmentHero.jsx';
 import SystemCard from '../components/dashboard/SystemCard.jsx';
-import StatusBadge from '../components/common/StatusBadge.jsx';
+
 import { STATIONS } from '../data/stationConfig.js';
-import { ArrowRight, AlertTriangle, ShieldCheck, Activity } from 'lucide-react';
 
-// ADD THIS
-import Bg from '../assets/bg.png';
-
-export function StationDashboard() {
+export function StationDashboard({ telemetry = {} }) {
   const { stationId = 'bharati' } = useParams();
   const navigate = useNavigate();
-  const context = useOutletContext() || {};
-  const currentStationCode = stationId.toLowerCase() === 'maitri' ? 'MTR' : 'BHT';
-  const station = STATIONS[currentStationCode] || STATIONS.BHT;
-  const telemetry = context.telemetry || {};
+
+  const currentStationCode =
+    stationId.toLowerCase() === 'maitri'
+      ? 'MTR'
+      : 'BHT';
+
+  const station =
+    STATIONS[currentStationCode] || STATIONS.BHT;
 
   // Extract environmental values from telemetry engine
   const env = telemetry.environment || {
@@ -28,28 +29,49 @@ export function StationDashboard() {
     isStale: false,
   };
 
-  // Systems list specific to the current station
+  // Systems list specific to current station
   const systems = station.systems || [];
 
-  // Determine dynamic metric value if affected by simulation failure injection
+  // Dynamic system metric
   const getDynamicMetric = (sys) => {
     if (sys.id === 'chp-1' && telemetry.power?.chp1) {
-      return { label: 'Load', value: telemetry.power.chp1.load };
+      return {
+        label: 'Load',
+        value: telemetry.power.chp1.load,
+      };
     }
+
     if (sys.id === 'chp-2' && telemetry.power?.chp2) {
-      return { label: 'Load', value: telemetry.power.chp2.load };
+      return {
+        label: 'Load',
+        value: telemetry.power.chp2.load,
+      };
     }
+
     if (sys.id === 'chp-3' && telemetry.power?.chp3) {
-      return { label: 'Load', value: telemetry.power.chp3.load };
+      return {
+        label: 'Load',
+        value: telemetry.power.chp3.load,
+      };
     }
+
     if (sys.id === 'fuel-farm' && telemetry.fuel) {
-      return { label: 'Remaining', value: `${telemetry.fuel.reservePercent}%` };
+      return {
+        label: 'Remaining',
+        value: `${telemetry.fuel.reservePercent}%`,
+      };
     }
+
     if (sys.id === 'hvac' && telemetry.heating) {
-      return { label: 'Heating Load', value: `${telemetry.heating.demandPercent}%` };
+      return {
+        label: 'Heating Load',
+        value: `${telemetry.heating.demandPercent}%`,
+      };
     }
+
     if (
-      (sys.id === 'sea-water-pump' || sys.id === 'lake-water-pump') &&
+      (sys.id === 'sea-water-pump' ||
+        sys.id === 'lake-water-pump') &&
       telemetry.water
     ) {
       return {
@@ -57,7 +79,11 @@ export function StationDashboard() {
         value: `${telemetry.water.pumpFlowLh.toLocaleString()} L/h`,
       };
     }
-    if (sys.id === 'satellite-communication' && telemetry.satellite) {
+
+    if (
+      sys.id === 'satellite-communication' &&
+      telemetry.satellite
+    ) {
       return {
         label: 'Status',
         value: telemetry.satellite.isLost
@@ -65,43 +91,49 @@ export function StationDashboard() {
           : `${telemetry.satellite.latencyMs} ms`,
       };
     }
+
     return sys.primaryMetric;
   };
 
+  // Dynamic system status
   const getDynamicStatus = (sys) => {
     if (sys.id === 'chp-3' && telemetry.power?.chp3) {
       return telemetry.power.chp3.status;
     }
+
     if (
-      (sys.id === 'sea-water-pump' || sys.id === 'lake-water-pump') &&
+      (sys.id === 'sea-water-pump' ||
+        sys.id === 'lake-water-pump') &&
       telemetry.water
     ) {
       return telemetry.water.pumpStatus;
     }
-    if (sys.id === 'satellite-communication' && telemetry.satellite?.isLost) {
+
+    if (
+      sys.id === 'satellite-communication' &&
+      telemetry.satellite?.isLost
+    ) {
       return 'Critical';
     }
-    if (sys.id === 'fuel-farm' && telemetry.fuel?.reservePercent < 35) {
+
+    if (
+      sys.id === 'fuel-farm' &&
+      telemetry.fuel?.reservePercent < 35
+    ) {
       return 'Warning';
     }
+
     return sys.status;
   };
 
   return (
-    // BACKGROUND CONTAINER
-    <div
-      className="relative min-h-screen bg-cover bg-center bg-fixed"
-      style={{
-        backgroundImage: `url(${Bg})`,
-      }}
-    >
-      {/* Optional white overlay for readability */}
-      <div className="absolute inset-0 bg-white/35 pointer-events-none" />
+    <div className="relative">
+      {/* Dashboard Content */}
+      <div className="max-w-6xl mx-auto space-y-8 p-4 md:p-6">
 
-      {/* CONTENT */}
-      <div className="relative max-w-6xl mx-auto space-y-8 p-4 md:p-6">
-        
-        {/* 1. Main Environment Card */}
+        {/* =========================
+            1. ENVIRONMENT
+        ========================== */}
         <section className="flex flex-col lg:flex-row gap-6 items-start justify-center">
           <EnvironmentHero
             stationName={station.name}
@@ -115,26 +147,35 @@ export function StationDashboard() {
           />
         </section>
 
-        {/* 2. Station Systems Grid */}
+        {/* =========================
+            2. STATION SYSTEMS
+        ========================== */}
         <section className="space-y-4">
+
+          {/* Section Header */}
           <div className="flex items-center justify-between">
+
             <div>
               <h2 className="text-lg font-semibold text-slate-900 tracking-tight">
                 Station Systems
               </h2>
 
-              <p className="text-xs text-slate-500">
-                Primary operational modules ({systems.length} systems registered)
+              <p className="text-xs text-slate-600">
+                Primary operational modules (
+                {systems.length} systems registered)
               </p>
             </div>
 
-            <span className="text-xs text-slate-400 hidden sm:inline">
-              Click any system to view telemetry, dependencies & maintenance history
+            <span className="text-xs text-slate-500 hidden sm:inline">
+              Click any system to view telemetry,
+              dependencies & maintenance history
             </span>
+
           </div>
 
-          {/* TWO-COLUMN GRID */}
+          {/* Systems Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
             {systems.map((sys) => {
               const status = getDynamicStatus(sys);
               const metric = getDynamicMetric(sys);
@@ -146,13 +187,17 @@ export function StationDashboard() {
                   status={status}
                   primaryMetric={metric}
                   onClick={() =>
-                    navigate(`/station/${stationId}/systems/${sys.id}`)
+                    navigate(
+                      `/station/${stationId}/systems/${sys.id}`
+                    )
                   }
                 />
               );
             })}
+
           </div>
         </section>
+
       </div>
     </div>
   );
