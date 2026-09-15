@@ -39,23 +39,23 @@ export function TopBar({ onOpenScenarioDrawer }) {
   const currentStation = stations.find((s) => s.code === currentStationCode) || stations[0];
 
   return (
-    <header className="h-16 bg-white border-b border-slate-200/90 px-6 flex items-center justify-between sticky top-0 z-30 shadow-[0_1px_2px_rgba(0,0,0,0.03)]">
+    <header className="h-16 bg-[#0B2545] border-b border-white/10 px-6 flex items-center justify-between sticky top-0 z-30 shadow-md text-white">
       {/* Left: Station Selector & Live Sync */}
       <div className="flex items-center gap-5">
         <div className="relative">
           <button
             onClick={() => setIsStationMenuOpen(!isStationMenuOpen)}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-200 hover:border-slate-300 bg-slate-50/70 hover:bg-slate-100/70 transition-colors text-sm font-semibold text-slate-800"
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-white/10 hover:border-white/20 bg-white/5 hover:bg-white/10 transition-colors text-sm font-semibold text-white"
           >
-            <span className="w-2 h-2 rounded-full bg-sky-500" />
-            <span className="font-heading tracking-wide uppercase">{currentStation?.name || 'Bharati Station'}</span>
+            <span className="w-2 h-2 rounded-full bg-sky-400" />
+            <span className="font-heading tracking-wide uppercase text-white">{currentStation?.name || 'Bharati Station'}</span>
             <span className="text-xs text-slate-400 font-mono">({currentStationCode})</span>
             <ChevronDown className="w-4 h-4 text-slate-400" />
           </button>
 
           {isStationMenuOpen && (
-            <div className="absolute top-full left-0 mt-1.5 w-64 bg-white rounded-xl shadow-xl border border-slate-200 py-1.5 z-50">
-              <div className="px-3 py-1.5 text-[11px] font-semibold uppercase text-slate-400 tracking-wider">
+            <div className="absolute top-full left-0 mt-1.5 w-64 bg-[#0B2545] rounded-xl shadow-2xl border border-white/10 py-1.5 z-50">
+              <div className="px-3 py-1.5 text-[11px] font-semibold uppercase text-slate-400 tracking-wider border-b border-white/10">
                 Select Antarctic Base
               </div>
               {stations.map((st) => (
@@ -67,12 +67,12 @@ export function TopBar({ onOpenScenarioDrawer }) {
                   }}
                   className={`w-full px-3.5 py-2.5 flex items-center justify-between text-left text-xs transition-colors ${
                     currentStationCode === st.code
-                      ? 'bg-sky-50 text-sky-900 font-semibold'
-                      : 'hover:bg-slate-50 text-slate-700'
+                      ? 'bg-sky-600 text-white font-semibold'
+                      : 'hover:bg-white/10 text-slate-200'
                   }`}
                 >
                   <div>
-                    <div className="font-medium text-slate-900">{st.name}</div>
+                    <div className="font-medium text-white">{st.name}</div>
                     <div className="text-[11px] text-slate-400">{st.location?.region || 'East Antarctica'}</div>
                   </div>
                   <Badge variant={st.healthScore >= 85 ? 'healthy' : 'warning'} size="sm">
@@ -85,14 +85,14 @@ export function TopBar({ onOpenScenarioDrawer }) {
         </div>
 
         {/* Real-time Connection Indicator */}
-        <div className="hidden sm:flex items-center gap-3 pl-3 border-l border-slate-200 text-xs text-slate-500">
+        <div className="hidden sm:flex items-center gap-3 pl-3 border-l border-white/10 text-xs text-slate-300">
           <div className="flex items-center gap-1.5">
             <span
               className={`w-2 h-2 rounded-full ${
-                isConnected ? 'bg-emerald-500 ring-4 ring-emerald-100' : 'bg-rose-500'
+                isConnected ? 'bg-emerald-500 ring-4 ring-emerald-500/20' : 'bg-rose-500'
               }`}
             />
-            <span className="font-medium text-slate-700">
+            <span className="font-medium text-white">
               {isConnected ? 'Telemetry Online' : 'Telemetry Link Lost'}
             </span>
           </div>
@@ -111,8 +111,8 @@ export function TopBar({ onOpenScenarioDrawer }) {
           onClick={onOpenScenarioDrawer}
           className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all ${
             activeScenario !== 'NORMAL'
-              ? 'bg-rose-50 border-rose-200 text-rose-700 animate-pulse'
-              : 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-700'
+              ? 'bg-rose-500/20 border-rose-500/40 text-rose-300 animate-pulse'
+              : 'bg-white/5 hover:bg-white/10 border-white/10 text-white'
           }`}
           title="Open SIH Scenario Simulation Controller"
         >
@@ -124,7 +124,7 @@ export function TopBar({ onOpenScenarioDrawer }) {
         <div className="relative">
           <button
             onClick={() => setIsAlertOpen(!isAlertOpen)}
-            className="relative p-2 rounded-lg border border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-colors text-slate-600"
+            className="relative p-2 rounded-lg border border-white/10 hover:border-white/20 hover:bg-white/10 transition-colors text-slate-200"
             title="Operational Alerts"
           >
             <Bell className="w-4 h-4" />
@@ -136,36 +136,36 @@ export function TopBar({ onOpenScenarioDrawer }) {
           </button>
 
           {isAlertOpen && (
-            <div className="absolute right-0 mt-2 w-96 bg-white rounded-xl shadow-2xl border border-slate-200 py-2 z-50">
-              <div className="px-4 py-2 border-b border-slate-100 flex items-center justify-between">
+            <div className="absolute right-0 mt-2 w-96 bg-[#0B2545] rounded-xl shadow-2xl border border-white/10 py-2 z-50 text-white">
+              <div className="px-4 py-2 border-b border-white/10 flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="font-heading font-semibold text-sm text-slate-900">Alert Center</span>
+                  <span className="font-heading font-semibold text-sm text-white">Alert Center</span>
                   <Badge variant={activeCount > 0 ? 'critical' : 'healthy'} size="sm">
                     {activeCount} Active
                   </Badge>
                 </div>
                 <button
                   onClick={() => setIsAlertOpen(false)}
-                  className="text-xs text-slate-400 hover:text-slate-600"
+                  className="text-xs text-slate-400 hover:text-white transition-colors"
                 >
                   Close
                 </button>
               </div>
 
-              <div className="max-h-80 overflow-y-auto divide-y divide-slate-100">
+              <div className="max-h-80 overflow-y-auto divide-y divide-white/10">
                 {alerts.length === 0 ? (
                   <div className="p-6 text-center text-xs text-slate-400">
                     All telemetry operating within safe nominal parameters.
                   </div>
                 ) : (
                   alerts.slice(0, 5).map((a) => (
-                    <div key={a._id || a.title} className="p-3.5 hover:bg-slate-50 transition-colors text-xs">
+                    <div key={a._id || a.title} className="p-3.5 hover:bg-white/5 transition-colors text-xs">
                       <div className="flex items-start justify-between gap-2">
-                        <div className="flex items-center gap-1.5 font-semibold text-slate-900">
+                        <div className="flex items-center gap-1.5 font-semibold text-white">
                           {a.severity === 'CRITICAL' ? (
-                            <AlertTriangle className="w-3.5 h-3.5 text-rose-600 shrink-0" />
+                            <AlertTriangle className="w-3.5 h-3.5 text-rose-400 shrink-0" />
                           ) : (
-                            <Radio className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                            <Radio className="w-3.5 h-3.5 text-amber-400 shrink-0" />
                           )}
                           <span className="truncate">{a.title}</span>
                         </div>
@@ -176,14 +176,14 @@ export function TopBar({ onOpenScenarioDrawer }) {
                           {a.severity}
                         </Badge>
                       </div>
-                      <p className="text-slate-600 mt-1 line-clamp-2">{a.description}</p>
+                      <p className="text-slate-300 mt-1 line-clamp-2">{a.description}</p>
                       <div className="mt-2 flex items-center justify-between text-[11px] text-slate-400">
                         <span>{a.assetId || 'Station Wide'}</span>
                         <div className="flex gap-2">
                           {a.status === 'ACTIVE' && (
                             <button
                               onClick={() => acknowledge(a._id)}
-                              className="text-sky-600 hover:underline font-medium"
+                              className="text-sky-400 hover:underline font-medium"
                             >
                               Acknowledge
                             </button>
@@ -191,7 +191,7 @@ export function TopBar({ onOpenScenarioDrawer }) {
                           {a.status !== 'RESOLVED' && (
                             <button
                               onClick={() => resolve(a._id)}
-                              className="text-emerald-600 hover:underline font-medium"
+                              className="text-emerald-400 hover:underline font-medium"
                             >
                               Resolve
                             </button>
@@ -207,15 +207,15 @@ export function TopBar({ onOpenScenarioDrawer }) {
         </div>
 
         {/* User Profile & Logout */}
-        <div className="flex items-center gap-2.5 pl-2 border-l border-slate-200">
-          <div className="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-700 font-semibold text-xs">
-            <User className="w-4 h-4 text-slate-600" />
+        <div className="flex items-center gap-2.5 pl-2 border-l border-white/10">
+          <div className="w-8 h-8 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-white font-semibold text-xs">
+            <User className="w-4 h-4 text-slate-200" />
           </div>
           <div className="hidden lg:block text-left">
-            <div className="text-xs font-semibold text-slate-800 leading-tight">
+            <div className="text-xs font-semibold text-white leading-tight">
               {user?.name || 'Operator On Duty'}
             </div>
-            <div className="text-[10px] font-mono text-sky-600 uppercase font-semibold">
+            <div className="text-[10px] font-mono text-sky-400 uppercase font-semibold">
               {user?.role || 'OPERATOR'}
             </div>
           </div>
@@ -224,7 +224,7 @@ export function TopBar({ onOpenScenarioDrawer }) {
               useAuthStore.getState().logout();
               window.location.href = '/';
             }}
-            className="p-1.5 rounded-lg border border-slate-200 hover:border-rose-300 hover:bg-rose-50 text-slate-400 hover:text-rose-600 transition-colors text-xs ml-1"
+            className="p-1.5 rounded-lg border border-white/10 hover:border-rose-500/40 hover:bg-rose-500/20 text-slate-300 hover:text-rose-300 transition-colors text-xs ml-1"
             title="Sign Out / Disconnect Session"
           >
             Sign Out
