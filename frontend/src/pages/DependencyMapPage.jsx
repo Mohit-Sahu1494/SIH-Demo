@@ -1,10 +1,34 @@
 import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { GitFork, ArrowDown, AlertTriangle, ShieldCheck, Zap, Flame, Droplets, Radio, Building2 } from 'lucide-react';
+import {
+  GitFork,
+  AlertTriangle,
+  ShieldCheck,
+  Zap,
+  Flame,
+  Droplets,
+  Radio,
+  Building2,
+  FlaskConical,
+  Snowflake,
+} from 'lucide-react';
 import StatusBadge from '../components/common/StatusBadge.jsx';
 import DataSourceBadge from '../components/common/DataSourceBadge.jsx';
 import { STATIONS } from '../data/stationConfig.js';
 import telemetryEngine from '../simulation/telemetryEngine.js';
+
+// Maps a node's id/category to a representative icon for the card.
+function getNodeIcon(node) {
+  const key = `${node.id} ${node.category}`.toLowerCase();
+  if (key.includes('fuel')) return Flame;
+  if (key.includes('chp') || key.includes('power') || key.includes('electrical') || key.includes('energy')) return Zap;
+  if (key.includes('thermal') || key.includes('hvac') || key.includes('heating')) return Flame;
+  if (key.includes('water') || key.includes('lake')) return Droplets;
+  if (key.includes('lab') || key.includes('research') || key.includes('scientific')) return FlaskConical;
+  if (key.includes('cold') || key.includes('food')) return Snowflake;
+  if (key.includes('sat') || key.includes('comm') || key.includes('telemetry')) return Radio;
+  return Building2;
+}
 
 export function DependencyMapPage() {
   const { stationId = 'bharati' } = useParams();
@@ -69,221 +93,147 @@ export function DependencyMapPage() {
   const affectedCount = cascadeAffectedIds.length;
   const riskLevel = affectedCount >= 4 ? 'High' : affectedCount >= 2 ? 'Medium' : 'Low';
 
+  const riskChipClass =
+    riskLevel === 'High'
+      ? 'bg-rose-50 text-rose-800 border-rose-200'
+      : riskLevel === 'Medium'
+      ? 'bg-amber-50 text-amber-800 border-amber-200'
+      : 'bg-emerald-50 text-emerald-800 border-emerald-200';
+
+  // Sort nodes by tier so the flowing grid still reads upstream → downstream
+  const orderedNodes = [...nodes].sort((a, b) => a.tier - b.tier);
+
   return (
-    <div className="max-w-6xl mx-auto space-y-6">
-      {/* Page Title & Context Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="max-w-6xl mx-auto px-3 sm:px-4 pb-10 space-y-4">
+      {/* Header */}
+      <div className="pt-3 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-              Digital Twin Dependency Map
-            </h1>
+            <h1 className="text-xl font-bold text-slate-900">Dependency Map</h1>
             <DataSourceBadge type="DERIVED" />
           </div>
-          <p className="text-xs text-slate-500 mt-1">
-            Topological causal network linking energy, thermal, hydraulic, and computational loads for {station.name} Station
+          <p className="text-xs text-slate-500 mt-0.5 max-w-md">
+            Tap a component to trace what it powers, and what fails if it goes down
           </p>
         </div>
 
-        <div className="flex items-center gap-4 text-xs">
+        <div className="flex items-center gap-4 text-[11px] shrink-0">
           <div className="flex items-center gap-1.5">
-            <span className="w-3 h-3 rounded bg-sky-100 border border-sky-400" />
-            <span className="text-slate-600">Selected Node</span>
+            <span className="w-2.5 h-2.5 rounded-full bg-sky-500" />
+            <span className="text-slate-500">Selected</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="w-3 h-3 rounded bg-amber-50 border border-amber-400" />
-            <span className="text-slate-600">Downstream Cascade</span>
+            <span className="w-2.5 h-2.5 rounded-full bg-amber-400" />
+            <span className="text-slate-500">Affected</span>
           </div>
         </div>
       </div>
 
-      {/* Selected Node Cascade Inspector Panel */}
-      <div className="bg-white rounded-xl border border-slate-200/90 p-5 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-        <div>
-          <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-            <span>Selected Component</span>
-            <span>•</span>
-            <span className="text-sky-800">{selectedNode.category}</span>
-          </div>
-          <h2 className="text-xl font-bold text-slate-900 mt-0.5">
-            {selectedNode.name}
-          </h2>
-          <p className="text-xs text-slate-500 mt-1">
-            Click any node below to simulate failure cascade and inspect downstream criticality.
-          </p>
-        </div>
+      {/* Flowing node grid, ordered upstream → downstream by tier */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+        {orderedNodes.map((node) => {
+          const isSelected = node.id === selectedNodeId;
+          const isAffected = cascadeAffectedIds.includes(node.id);
+          const Icon = getNodeIcon(node);
 
-        <div className="flex items-center gap-6 border-t md:border-t-0 md:border-l border-slate-100 pt-4 md:pt-0 md:pl-6 text-left">
-          <div>
-            <span className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">
-              Affected Subsystems
-            </span>
-            <div className="text-2xl font-bold text-slate-900 mt-0.5">
-              {affectedCount}
-            </div>
-          </div>
+          return (
+            <button
+              key={node.id}
+              onClick={() => setSelectedNodeId(node.id)}
+              className={`text-left rounded-2xl border p-3.5 transition-all duration-200 cursor-pointer ${
+                isSelected
+                  ? 'bg-gradient-to-br from-sky-50 to-white border-sky-400 shadow-md shadow-sky-100'
+                  : isAffected
+                  ? 'bg-gradient-to-br from-amber-50 to-white border-amber-300 shadow-sm'
+                  : 'bg-white border-slate-200 shadow-sm hover:border-slate-300 hover:shadow-md'
+              } ${isSelected ? 'col-span-2 sm:col-span-3 lg:col-span-4' : ''}`}
+            >
+              <div className="flex items-start justify-between gap-2">
+                <div
+                  className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+                    isSelected
+                      ? 'bg-sky-600 text-white'
+                      : isAffected
+                      ? 'bg-amber-100 text-amber-700'
+                      : 'bg-slate-100 text-slate-500'
+                  }`}
+                >
+                  <Icon className="w-4.5 h-4.5" />
+                </div>
+                <StatusBadge status={node.status} size="sm" />
+              </div>
 
-          <div>
-            <span className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">
-              Cascade Risk
-            </span>
-            <div className="mt-1">
-              <span
-                className={`px-2.5 py-1 rounded text-xs font-semibold border ${
-                  riskLevel === 'High'
-                    ? 'bg-rose-50 text-rose-800 border-rose-200'
-                    : riskLevel === 'Medium'
-                    ? 'bg-amber-50 text-amber-800 border-amber-200'
-                    : 'bg-emerald-50 text-emerald-800 border-emerald-200'
+              <div className="mt-2.5">
+                <div className="text-sm font-bold text-slate-900 leading-snug">{node.name}</div>
+                <div className="flex items-center gap-1.5 mt-0.5 text-[11px] text-slate-400">
+                  <span>Tier {node.tier}</span>
+                  <span>·</span>
+                  <span className="truncate">{node.category}</span>
+                </div>
+              </div>
+
+              {/* Inline expanding detail, only on the selected card */}
+              <div
+                className={`grid transition-all duration-300 ease-out ${
+                  isSelected ? 'grid-rows-[1fr] opacity-100 mt-3.5' : 'grid-rows-[0fr] opacity-0'
                 }`}
               >
-                {riskLevel} Risk
-              </span>
-            </div>
-          </div>
-        </div>
+                <div className="overflow-hidden">
+                  <div className="pt-3.5 border-t border-sky-100 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6">
+                    <div className="flex items-center gap-6">
+                      <div>
+                        <div className="text-[10px] uppercase tracking-wide text-slate-400 font-semibold">
+                          Affected subsystems
+                        </div>
+                        <div className="text-xl font-bold text-slate-900 mt-0.5">{affectedCount}</div>
+                      </div>
+                      <div>
+                        <div className="text-[10px] uppercase tracking-wide text-slate-400 font-semibold">
+                          Cascade risk
+                        </div>
+                        <span
+                          className={`inline-block mt-1 px-2.5 py-1 rounded-lg text-xs font-semibold border ${riskChipClass}`}
+                        >
+                          {riskLevel}
+                        </span>
+                      </div>
+                    </div>
+
+                    {affectedCount > 0 ? (
+                      <div className="flex items-start gap-2 text-xs text-slate-600 flex-1">
+                        <GitFork className="w-3.5 h-3.5 text-slate-400 shrink-0 mt-0.5" />
+                        <span>
+                          A failure here cascades to{' '}
+                          {cascadeAffectedIds
+                            .map((id) => nodes.find((n) => n.id === id)?.name)
+                            .filter(Boolean)
+                            .join(', ')}
+                          .
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2 text-xs text-emerald-700">
+                        <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
+                        <span>Terminal node — no downstream dependents.</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </button>
+          );
+        })}
       </div>
 
-      {/* Visual Topological Pipeline Visualization */}
-      <div className="bg-white rounded-xl border border-slate-200/90 p-6 shadow-xs space-y-6">
-        <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-          Station Operational Pipeline (Click node to inspect)
-        </h3>
-
-        <div className="space-y-6">
-          {/* Level 1: Fuel Sourcing */}
-          <div>
-            <div className="text-[11px] font-semibold text-slate-400 uppercase mb-2">1. Fuel Logistics</div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-              {nodes.filter((n) => n.tier === 1).map((node) => {
-                const isSelected = node.id === selectedNodeId;
-                const isAffected = cascadeAffectedIds.includes(node.id);
-                return (
-                  <button
-                    key={node.id}
-                    onClick={() => setSelectedNodeId(node.id)}
-                    className={`p-3 rounded-lg border text-left transition-all cursor-pointer ${
-                      isSelected
-                        ? 'bg-sky-50/80 border-sky-500 ring-2 ring-sky-200'
-                        : isAffected
-                        ? 'bg-amber-50/80 border-amber-400'
-                        : 'bg-white border-slate-200 hover:border-slate-300'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="font-semibold text-slate-900">{node.name}</span>
-                      <StatusBadge status={node.status} size="sm" />
-                    </div>
-                    <span className="text-[11px] text-slate-500">{node.category}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="flex justify-center text-slate-300">
-            <ArrowDown className="w-5 h-5" />
-          </div>
-
-          {/* Level 2: Generation / CHPs */}
-          <div>
-            <div className="text-[11px] font-semibold text-slate-400 uppercase mb-2">2. Power & Cogeneration</div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-              {nodes.filter((n) => n.tier === 2).map((node) => {
-                const isSelected = node.id === selectedNodeId;
-                const isAffected = cascadeAffectedIds.includes(node.id);
-                return (
-                  <button
-                    key={node.id}
-                    onClick={() => setSelectedNodeId(node.id)}
-                    className={`p-3 rounded-lg border text-left transition-all cursor-pointer ${
-                      isSelected
-                        ? 'bg-sky-50/80 border-sky-500 ring-2 ring-sky-200'
-                        : isAffected
-                        ? 'bg-amber-50/80 border-amber-400'
-                        : 'bg-white border-slate-200 hover:border-slate-300'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="font-semibold text-slate-900">{node.name}</span>
-                      <StatusBadge status={node.status} size="sm" />
-                    </div>
-                    <span className="text-[11px] text-slate-500">{node.category}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="flex justify-center text-slate-300">
-            <ArrowDown className="w-5 h-5" />
-          </div>
-
-          {/* Level 3: Grid & Thermal Distribution */}
-          <div>
-            <div className="text-[11px] font-semibold text-slate-400 uppercase mb-2">3. Distribution & Thermal Networks</div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-              {nodes.filter((n) => n.tier === 3).map((node) => {
-                const isSelected = node.id === selectedNodeId;
-                const isAffected = cascadeAffectedIds.includes(node.id);
-                return (
-                  <button
-                    key={node.id}
-                    onClick={() => setSelectedNodeId(node.id)}
-                    className={`p-3 rounded-lg border text-left transition-all cursor-pointer ${
-                      isSelected
-                        ? 'bg-sky-50/80 border-sky-500 ring-2 ring-sky-200'
-                        : isAffected
-                        ? 'bg-amber-50/80 border-amber-400'
-                        : 'bg-white border-slate-200 hover:border-slate-300'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="font-semibold text-slate-900">{node.name}</span>
-                      <StatusBadge status={node.status} size="sm" />
-                    </div>
-                    <span className="text-[11px] text-slate-500">{node.category}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="flex justify-center text-slate-300">
-            <ArrowDown className="w-5 h-5" />
-          </div>
-
-          {/* Level 4: Life Support & End Consumers */}
-          <div>
-            <div className="text-[11px] font-semibold text-slate-400 uppercase mb-2">4. Life Support, Water & Consumers</div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
-              {nodes.filter((n) => n.tier >= 4).map((node) => {
-                const isSelected = node.id === selectedNodeId;
-                const isAffected = cascadeAffectedIds.includes(node.id);
-                return (
-                  <button
-                    key={node.id}
-                    onClick={() => setSelectedNodeId(node.id)}
-                    className={`p-3 rounded-lg border text-left transition-all cursor-pointer ${
-                      isSelected
-                        ? 'bg-sky-50/80 border-sky-500 ring-2 ring-sky-200'
-                        : isAffected
-                        ? 'bg-amber-50/80 border-amber-400'
-                        : 'bg-white border-slate-200 hover:border-slate-300'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="font-semibold text-slate-900 truncate">{node.name}</span>
-                      <StatusBadge status={node.status} size="sm" />
-                    </div>
-                    <span className="text-[11px] text-slate-500">{node.category}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+      {selectedNode.status === 'Warning' && (
+        <div className="flex items-start gap-2.5 px-4 py-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900">
+          <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+          <span>
+            <strong>{selectedNode.name}</strong> is currently flagged Warning — cascade risk should be treated
+            as elevated beyond the static estimate above.
+          </span>
         </div>
-      </div>
+      )}
     </div>
   );
 }

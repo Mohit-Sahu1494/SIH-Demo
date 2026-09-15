@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useParams, Link } from 'react-router-dom';
 import {
   ResponsiveContainer,
   LineChart,
   Line,
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
   Tooltip,
@@ -26,6 +28,28 @@ import StatusBadge from '../components/common/StatusBadge.jsx';
 import DataSourceBadge from '../components/common/DataSourceBadge.jsx';
 import { STATIONS } from '../data/stationConfig.js';
 import telemetryEngine from '../simulation/telemetryEngine.js';
+
+function ChartTooltip({ active, payload, label }) {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="bg-white border border-slate-200 rounded-lg shadow-sm px-3 py-2 text-xs space-y-1">
+      <div className="font-semibold text-slate-700">{label}</div>
+      {payload.map((p) => (
+        <div key={p.dataKey} className="flex items-center gap-2">
+          <span
+            className="w-2 h-2 rounded-full shrink-0"
+            style={{ backgroundColor: p.color }}
+          />
+          <span className="text-slate-500">{p.dataKey === 'load' ? 'Load' : 'Temp'}</span>
+          <span className="font-semibold text-slate-800 ml-auto">
+            {p.value}
+            {p.dataKey === 'load' ? '%' : '°C'}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export function SystemDetailsPage() {
   const { stationId = 'bharati', systemId = 'chp-2' } = useParams();
@@ -52,6 +76,10 @@ export function SystemDetailsPage() {
   const isChp3Tripped = system.id === 'chp-3' && telemetry.injections?.chpFailure;
   const currentStatus = isChp3Tripped ? 'Critical' : system.status;
   const currentHealth = isChp3Tripped ? 32 : system.healthScore;
+
+  // Unique per station+system so the chart fully remounts (and its draw-in
+  // animation replays from zero) every time the user switches pages/systems.
+  const chartInstanceKey = `${currentStationCode}-${system.id}`;
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
@@ -106,7 +134,7 @@ export function SystemDetailsPage() {
         ))}
       </div>
 
-      {/* Performance Trend Line Chart */}
+      {/* Performance Trend — animated overlaid area chart */}
       <div className="bg-white rounded-xl border border-slate-200/90 p-5 shadow-xs space-y-4">
         <div className="flex items-center justify-between">
           <div>
@@ -119,99 +147,85 @@ export function SystemDetailsPage() {
           </div>
           <div className="flex items-center gap-4 text-xs">
             <div className="flex items-center gap-1.5 text-slate-600">
-              <span className="w-2.5 h-0.5 bg-sky-700 rounded-full" />
+              <span className="w-2.5 h-2.5 rounded-full bg-teal-500" />
               <span>Load (%)</span>
             </div>
             <div className="flex items-center gap-1.5 text-slate-600">
-              <span className="w-2.5 h-0.5 bg-amber-600 rounded-full" />
+              <span className="w-2.5 h-2.5 rounded-full bg-rose-400" />
               <span>Temperature (°C)</span>
             </div>
           </div>
         </div>
 
-        <div className="h-64 w-full">
+        {/* key={chartInstanceKey} forces a fresh mount (and animation replay)
+            every time the station or system changes, instead of the chart
+            silently reusing its old DOM/animation state across navigations. */}
+        <div className="h-64 w-full" key={chartInstanceKey}>
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={trendData} margin={{ top: 10, right: 20, left: -10, bottom: 0 }}>
+            <AreaChart data={trendData} margin={{ top: 10, right: 20, left: -10, bottom: 0 }}>
+              <defs>
+                <linearGradient id={`fillLoad-${chartInstanceKey}`} x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#14b8a6" stopOpacity={0.35} />
+                  <stop offset="100%" stopColor="#14b8a6" stopOpacity={0} />
+                </linearGradient>
+                <linearGradient id={`fillTemp-${chartInstanceKey}`} x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#fb7185" stopOpacity={0.3} />
+                  <stop offset="100%" stopColor="#fb7185" stopOpacity={0} />
+                </linearGradient>
+              </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
-              <XAxis dataKey="time" stroke="#94A3B8" fontSize={11} tickLine={false} />
-              <YAxis stroke="#94A3B8" fontSize={11} tickLine={false} domain={[50, 100]} />
-              <Tooltip
-                contentStyle={{ backgroundColor: '#FFFFFF', borderColor: '#E2E8F0', borderRadius: '8px', fontSize: '12px' }}
+              <XAxis dataKey="time" stroke="#94A3B8" fontSize={11} tickLine={false} axisLine={false} />
+              <YAxis stroke="#94A3B8" fontSize={11} tickLine={false} axisLine={false} domain={[50, 100]} />
+              <Tooltip content={<ChartTooltip />} />
+              <Area
+                type="monotone"
+                dataKey="temp"
+                stroke="#fb7185"
+                strokeWidth={2}
+                fill={`url(#fillTemp-${chartInstanceKey})`}
+                dot={false}
+                activeDot={{ r: 4 }}
+                isAnimationActive
+                animationDuration={1400}
+                animationEasing="ease-out"
               />
-              <Line type="monotone" dataKey="load" stroke="#0284C7" strokeWidth={2} dot={{ r: 3 }} />
-              <Line type="monotone" dataKey="temp" stroke="#D97706" strokeWidth={2} dot={{ r: 3 }} />
-            </LineChart>
+              <Area
+                type="monotone"
+                dataKey="load"
+                stroke="#0d9488"
+                strokeWidth={2.5}
+                fill={`url(#fillLoad-${chartInstanceKey})`}
+                dot={false}
+                activeDot={{ r: 4 }}
+                isAnimationActive
+                animationDuration={1400}
+                animationEasing="ease-out"
+              />
+            </AreaChart>
           </ResponsiveContainer>
         </div>
       </div>
 
-      {/* Health & Dependencies Row */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Health Section */}
-        <div className="bg-white rounded-xl border border-slate-200/90 p-5 shadow-xs space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-            <h2 className="text-sm font-semibold text-slate-900 uppercase tracking-wider">
-              Health & Degradation
-            </h2>
-            <DataSourceBadge type="DERIVED" />
-          </div>
-
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-full border-4 border-slate-100 flex items-center justify-center font-bold text-xl text-slate-900 border-t-emerald-600">
-              {currentHealth}%
-            </div>
-            <div>
-              <div className="text-sm font-semibold text-slate-800">
-                Overall Equipment Health
-              </div>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Vibration index, thermal stress accumulation, and lube oil quality within acceptable parameters.
-              </p>
-            </div>
-          </div>
+      {/* Health & Degradation — full width */}
+      <div className="bg-white rounded-xl border border-slate-200/90 p-5 shadow-xs space-y-4">
+        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+          <h2 className="text-sm font-semibold text-slate-900 uppercase tracking-wider">
+            Health & Degradation
+          </h2>
+          <DataSourceBadge type="DERIVED" />
         </div>
 
-        {/* Dependencies Section */}
-        <div className="bg-white rounded-xl border border-slate-200/90 p-5 shadow-xs space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-            <h2 className="text-sm font-semibold text-slate-900 uppercase tracking-wider">
-              Subsystem Dependencies
-            </h2>
-            <GitFork className="w-4 h-4 text-slate-400" />
+        <div className="flex flex-col sm:flex-row sm:items-center gap-5">
+          <div className="w-20 h-20 rounded-full border-4 border-slate-100 flex items-center justify-center font-bold text-2xl text-slate-900 border-t-emerald-600 shrink-0">
+            {currentHealth}%
           </div>
-
-          <div className="space-y-3 text-xs">
-            <div>
-              <span className="font-medium text-slate-400 uppercase text-[10px] tracking-wider">
-                Directly Supplies / Affects:
-              </span>
-              <div className="flex flex-wrap gap-1.5 mt-1.5">
-                {system.dependencies?.supplies?.map((dep) => (
-                  <span
-                    key={dep}
-                    className="px-2.5 py-1 rounded bg-slate-50 border border-slate-200 text-slate-700 font-medium"
-                  >
-                    {dep}
-                  </span>
-                ))}
-              </div>
+          <div>
+            <div className="text-sm font-semibold text-slate-800">
+              Overall Equipment Health
             </div>
-
-            <div>
-              <span className="font-medium text-slate-400 uppercase text-[10px] tracking-wider">
-                Upstream Feed:
-              </span>
-              <div className="flex flex-wrap gap-1.5 mt-1.5">
-                {system.dependencies?.affectedBy?.map((up) => (
-                  <span
-                    key={up}
-                    className="px-2.5 py-1 rounded bg-slate-100 text-slate-600 font-medium"
-                  >
-                    {up}
-                  </span>
-                ))}
-              </div>
-            </div>
+            <p className="text-xs text-slate-500 mt-0.5 max-w-md">
+              Vibration index, thermal stress accumulation, and lube oil quality within acceptable parameters.
+            </p>
           </div>
         </div>
       </div>

@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Outlet, NavLink, useParams, useNavigate, useLocation } from 'react-router-dom';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Outlet, NavLink, Link, useParams, useNavigate, useLocation } from 'react-router-dom';
 import {
   Activity,
   Compass,
@@ -22,6 +22,8 @@ import {
   Clock,
   ShieldCheck,
   Building,
+  Ship,
+  Bell,
 } from 'lucide-react';
 import StationSwitcher from '../components/common/StationSwitcher.jsx';
 import DemoControlBar from '../components/common/DemoControlBar.jsx';
@@ -86,14 +88,24 @@ export function MissionControlLayout() {
   const currentTel = telemetryState[currentStationCode] || telemetryState.BHT;
   const isSatelliteLost = currentTel?.satellite?.isLost;
 
+  // Dynamically compute active alert count from telemetry state
+  const activeAlertCount = useMemo(() => {
+    let count = 2; // baseline alerts (CHP warning, water consumables)
+    if (currentTel?.injections?.chpFailure) count += 1;
+    if (currentTel?.injections?.pumpFailure) count += 1;
+    if (currentTel?.injections?.satelliteFailure) count += 1;
+    if (currentTel?.injections?.lowFuel) count += 1;
+    return count;
+  }, [currentTel?.injections]);
+
   const handleStationSwitch = (code) => {
     navigate(`/station/${code.toLowerCase()}`);
   };
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-slate-900 flex flex-col font-sans selection:bg-sky-100 selection:text-sky-900">
-      {/* Top Demo Simulation Failure Injection Bar */}
-      <DemoControlBar currentStation={currentStation.name} />
+      {/* Top Demo Simulation Failure Injection Bar
+      <DemoControlBar currentStation={currentStation.name} /> */}
 
       {/* Main Mission Control Header */}
       <header className="bg-white border-b border-slate-200/90 sticky top-0 z-40">
@@ -116,26 +128,47 @@ export function MissionControlLayout() {
           </div>
 
           {/* Right Header Status Telemetry */}
-          <div className="flex items-center gap-4 sm:gap-6 text-xs">
+          <div className="flex items-center gap-3 sm:gap-4 text-xs">
+            {/* Quick Operational Alerts Link */}
+            <Link
+              to={`/station/${stationId}/alerts`}
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border transition-all ${
+                activeAlertCount > 2
+                  ? 'bg-rose-50 border-rose-300 text-rose-800 animate-pulse'
+                  : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
+              }`}
+              title="View Station Operational Alerts"
+            >
+              <Bell className={`w-3.5 h-3.5 ${activeAlertCount > 2 ? 'text-rose-600' : 'text-slate-500'}`} />
+              <span className="hidden sm:inline font-semibold">Alerts</span>
+              <span
+                className={`text-[10px] font-bold px-1.5 py-0.2 rounded-full font-mono ${
+                  activeAlertCount > 0 ? 'bg-rose-600 text-white' : 'bg-slate-200 text-slate-700'
+                }`}
+              >
+                {activeAlertCount}
+              </span>
+            </Link>
+
             {/* Last update */}
-            <div className="hidden sm:flex flex-col text-right">
+            {/* <div className="hidden sm:flex flex-col text-right">
               <span className="text-slate-400 text-[10px] uppercase font-medium">Telemetry Age</span>
               <span className={`font-mono font-medium ${isSatelliteLost ? 'text-rose-600 font-bold' : 'text-slate-700'}`}>
                 {isSatelliteLost ? '17 min ago (STALE)' : `Updated ${telemetryState.telemetryAgeSeconds}s ago`}
               </span>
-            </div>
+            </div> */}
 
             {/* Antarctic Local Time */}
-            <div className="hidden lg:flex flex-col text-right">
+            {/* <div className="hidden lg:flex flex-col text-right">
               <span className="text-slate-400 text-[10px] uppercase font-medium">Station Time</span>
               <span className="font-mono text-slate-700 font-medium flex items-center gap-1 justify-end">
                 <Clock className="w-3 h-3 text-slate-400" />
                 {antarcticTime}
               </span>
-            </div>
+            </div> */}
 
             {/* Satellite Link Status */}
-            <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-md border bg-slate-50 border-slate-200">
+           {/* <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-md border bg-slate-50 border-slate-200">
               <span
                 className={`w-2 h-2 rounded-full ${
                   isSatelliteLost ? 'bg-rose-500 animate-ping' : 'bg-emerald-500'
@@ -147,7 +180,7 @@ export function MissionControlLayout() {
                   {isSatelliteLost ? 'LOST / OFFLINE' : 'Connected'}
                 </span>
               </div>
-            </div>
+            </div> */}
           </div>
         </div>
       </header>
@@ -371,11 +404,31 @@ export function MissionControlLayout() {
                     }
                   >
                     <span className="flex items-center gap-2">
-                      <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
-                      <span>Alert Center & Why</span>
+                      <AlertTriangle className={`w-3.5 h-3.5 ${activeAlertCount > 2 ? 'text-rose-600 animate-pulse' : 'text-amber-500'}`} />
+                      <span>Alert Center</span>
                     </span>
-                    <span className="text-[10px] font-bold px-1.5 py-0.2 rounded-full bg-amber-100 text-amber-900">
-                      3
+                    <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded-full font-mono ${
+                      activeAlertCount > 2 ? 'bg-rose-100 text-rose-800' : 'bg-amber-100 text-amber-900'
+                    }`}>
+                      {activeAlertCount}
+                    </span>
+                  </NavLink>
+
+                  <NavLink
+                    to={`/station/${stationId}/tracking`}
+                    className={({ isActive }) =>
+                      `flex items-center justify-between px-2.5 py-1.5 rounded ${
+                        isActive ? 'text-sky-900 bg-sky-50/70 font-semibold' : 'hover:bg-slate-50 text-slate-600'
+                      }`
+                    }
+                  >
+                    <span className="flex items-center gap-2">
+                      <Ship className="w-3.5 h-3.5 text-sky-700" />
+                      <span>Vessel Tracking</span>
+                    </span>
+                    <span className="text-[9px] font-bold px-1.5 py-0.2 rounded font-mono bg-emerald-100 text-emerald-800 flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                      LIVE
                     </span>
                   </NavLink>
 

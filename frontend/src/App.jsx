@@ -13,6 +13,7 @@ import ScenarioSimulatorPage from './pages/ScenarioSimulatorPage.jsx';
 import AlertCenterPage from './pages/AlertCenterPage.jsx';
 import ResourceForecastPage from './pages/ResourceForecastPage.jsx';
 import LogisticsPage from './pages/LogisticsPage.jsx';
+import VesselTrackingPage from './pages/VesselTrackingPage.jsx';
 import EnvironmentHistoricalPage from './pages/EnvironmentHistoricalPage.jsx';
 import StationComparisonPage from './pages/StationComparisonPage.jsx';
 
@@ -42,6 +43,7 @@ export default function App() {
           {/* Operations Features */}
           <Route path="alerts" element={<AlertCenterPage />} />
           <Route path="logistics" element={<LogisticsPage />} />
+          <Route path="tracking" element={<VesselTrackingPage />} />
           <Route path="environment" element={<EnvironmentHistoricalPage />} />
         </Route>
 

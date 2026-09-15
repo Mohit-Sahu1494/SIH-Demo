@@ -1,20 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
-import {
-  Cpu,
-  Play,
-  RotateCcw,
-  AlertTriangle,
-  CheckCircle2,
-  TrendingDown,
-  Zap,
-  Flame,
-  ShieldAlert,
-  ArrowRight,
-} from 'lucide-react';
+import { RotateCcw, AlertTriangle } from 'lucide-react';
 import StatusBadge from '../components/common/StatusBadge.jsx';
 import DataSourceBadge from '../components/common/DataSourceBadge.jsx';
 import { STATIONS } from '../data/stationConfig.js';
+
+const DEFAULTS = {
+  temperature: -16,
+  supplyDelay: 0,
+  chpFailure: 'None',
+  windSeverity: 'Normal',
+  satelliteConn: 'Normal',
+  waterPumpStatus: 'Normal',
+};
 
 export function ScenarioSimulatorPage() {
   const { stationId = 'bharati' } = useParams();
@@ -30,29 +28,12 @@ export function ScenarioSimulatorPage() {
   const [satelliteConn, setSatelliteConn] = useState('Degraded'); // Normal / Degraded / Offline
   const [waterPumpStatus, setWaterPumpStatus] = useState('Normal'); // Normal / Failed
 
-  // Simulation execution results
-  const [isSimulated, setIsSimulated] = useState(true);
-  const [results, setResults] = useState({
-    heatingDemandDelta: '+31%',
-    fuelConsumptionDelta: '+22%',
-    availablePower: '360 → 240 kVA',
-    fuelRunway: '46 → 35 days',
-    nextResupply: '47 days',
-    resourceDeficit: '12 days',
-    overallRisk: 'CRITICAL',
-    actions: [
-      'Reduce non-critical laboratory electrical load by shed-cycling spectrometer UPS feeds.',
-      'Enable HVAC thermal conservation profile (set auxiliary zones to setback temperature +15°C).',
-      'Prioritize accommodation, satellite telemetry, and potable water intake line heat tracing.',
-      `Initiate inspection and emergency bypass on ${isBharati ? 'CHP-2' : 'DG-2'} alternator cooling circuit.`,
-      'Prepare emergency fuel allocation from Reserve Bund-B and notify NCPOR Polar Logistics desk.',
-    ],
-  });
-
-  const handleRunSimulation = () => {
-    // Dynamic calculation based on user form inputs
+  // Simulation results — recalculated live whenever an input changes
+  const results = useMemo(() => {
     const tempDrop = Math.max(0, -16.4 - temperature);
-    const heatingDeltaNum = Math.round(tempDrop * 1.2 + (windSeverity === 'Extreme' ? 12 : windSeverity === 'High' ? 6 : 0));
+    const heatingDeltaNum = Math.round(
+      tempDrop * 1.2 + (windSeverity === 'Extreme' ? 12 : windSeverity === 'High' ? 6 : 0)
+    );
     const fuelDeltaNum = Math.round(heatingDeltaNum * 0.7 + (chpFailure !== 'None' ? 6 : 0));
 
     const basePower = isBharati ? 360 : 300;
@@ -65,7 +46,7 @@ export function ScenarioSimulatorPage() {
     const deficit = Math.max(0, resupplyHorizon - computedRunway);
 
     let risk = 'NORMAL';
-    if (deficit > 8 || chpFailure !== 'None' && temperature <= -35) {
+    if ((deficit > 8 || chpFailure !== 'None') && temperature <= -35) {
       risk = 'CRITICAL';
     } else if (deficit > 0 || temperature <= -30) {
       risk = 'WARNING';
@@ -86,8 +67,11 @@ export function ScenarioSimulatorPage() {
     if (satelliteConn === 'Offline') {
       dynamicActions.push('Switch to Iridium backup emergency messaging terminal for telemetry bursts.');
     }
+    if (waterPumpStatus === 'Failed') {
+      dynamicActions.push('Deploy backup intake pump and initiate emergency water rationing protocol.');
+    }
 
-    setResults({
+    return {
       heatingDemandDelta: `+${heatingDeltaNum}%`,
       fuelConsumptionDelta: `+${fuelDeltaNum}%`,
       availablePower: `${basePower} → ${remainingPower} kVA`,
@@ -96,60 +80,59 @@ export function ScenarioSimulatorPage() {
       resourceDeficit: deficit > 0 ? `${deficit} days` : '0 days (Nominal)',
       overallRisk: risk,
       actions: dynamicActions,
-    });
-    setIsSimulated(true);
-  };
+    };
+  }, [temperature, supplyDelay, chpFailure, windSeverity, satelliteConn, waterPumpStatus, isBharati, station]);
 
   const handleReset = () => {
-    setTemperature(-16);
-    setSupplyDelay(0);
-    setChpFailure('None');
-    setWindSeverity('Normal');
-    setSatelliteConn('Normal');
-    setWaterPumpStatus('Normal');
-    setIsSimulated(false);
+    setTemperature(DEFAULTS.temperature);
+    setSupplyDelay(DEFAULTS.supplyDelay);
+    setChpFailure(DEFAULTS.chpFailure);
+    setWindSeverity(DEFAULTS.windSeverity);
+    setSatelliteConn(DEFAULTS.satelliteConn);
+    setWaterPumpStatus(DEFAULTS.waterPumpStatus);
   };
 
+  const isDeficit = results.resourceDeficit !== '0 days (Nominal)';
+
   return (
-    <div className="max-w-5xl mx-auto space-y-6">
+    <div className="max-w-6xl mx-auto px-3 sm:px-4 pb-10 space-y-4">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="pt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-              Operational Scenario Simulator
-            </h1>
+            <h1 className="text-xl font-bold text-slate-900">Scenario Simulator</h1>
             <DataSourceBadge type="SIMULATED" />
           </div>
-          <p className="text-xs text-slate-500 mt-1">
-            Evaluate climate stress, mechanical outages, and logistics delays on {station.name} station survivability
+          <p className="text-xs text-slate-500 mt-0.5">
+            Model climate, mechanical, and logistics stress on {station.name} station survivability
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={handleReset}
-            className="px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-medium text-slate-600 hover:bg-slate-50 flex items-center gap-1.5"
-          >
-            <RotateCcw className="w-3.5 h-3.5" />
-            <span>Reset Inputs</span>
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={handleReset}
+          className="self-start sm:self-auto px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-medium text-slate-600 hover:bg-slate-50 flex items-center gap-1.5 shrink-0"
+        >
+          <RotateCcw className="w-3.5 h-3.5" />
+          Reset
+        </button>
       </div>
 
-      {/* Simulator Form Controls Grid */}
-      <div className="bg-white rounded-xl border border-slate-200/90 p-6 shadow-xs space-y-6">
-        <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-          Input Operational Variables & Stress Parameters
-        </h2>
+      {/* Split panel: inputs (left) / live results (right) */}
+      <div className="grid grid-cols-1 lg:grid-cols-[360px_1fr] gap-4 items-start">
+        {/* ---------------- INPUT PANEL ---------------- */}
+        <div className="lg:sticky lg:top-4 bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-5">
+          <h2 className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide">
+            Stress parameters
+          </h2>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* Outside Temperature Slider */}
-          <div className="space-y-2">
-            <div className="flex justify-between text-xs">
-              <label className="font-semibold text-slate-700">Outside Temperature</label>
-              <span className="font-mono font-bold text-sky-800">{temperature}°C</span>
+          {/* Outside Temperature */}
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-medium text-slate-700">Outside temperature</label>
+              <span className="text-xs font-semibold text-sky-800 tabular-nums transition-colors duration-300">
+                {temperature}°C
+              </span>
             </div>
             <input
               type="range"
@@ -161,16 +144,18 @@ export function ScenarioSimulatorPage() {
               className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-sky-700"
             />
             <div className="flex justify-between text-[10px] text-slate-400">
-              <span>-60°C (Polar Vortex)</span>
-              <span>-5°C (Summer)</span>
+              <span>−60°C</span>
+              <span>−5°C</span>
             </div>
           </div>
 
-          {/* Supply Delay Slider */}
-          <div className="space-y-2">
-            <div className="flex justify-between text-xs">
-              <label className="font-semibold text-slate-700">Vessel Resupply Delay</label>
-              <span className="font-mono font-bold text-sky-800">+{supplyDelay} days</span>
+          {/* Supply Delay */}
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-medium text-slate-700">Resupply delay</label>
+              <span className="text-xs font-semibold text-sky-800 tabular-nums transition-colors duration-300">
+                +{supplyDelay}d
+              </span>
             </div>
             <input
               type="range"
@@ -182,47 +167,49 @@ export function ScenarioSimulatorPage() {
               className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-sky-700"
             />
             <div className="flex justify-between text-[10px] text-slate-400">
-              <span>0 days (On Schedule)</span>
-              <span>+30 days (Heavy Sea Ice)</span>
+              <span>On schedule</span>
+              <span>+30d</span>
             </div>
           </div>
 
-          {/* CHP Failure Select */}
-          <div className="space-y-1.5 text-xs">
-            <label className="font-semibold text-slate-700">Generator / CHP Outage</label>
+          <div className="h-px bg-slate-100" />
+
+          {/* CHP / Generator outage */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-slate-700">Generator / CHP outage</label>
             <select
               value={chpFailure}
               onChange={(e) => setChpFailure(e.target.value)}
-              className="w-full py-2 px-3 rounded-lg border border-slate-200 bg-white text-slate-800 font-medium focus:outline-hidden focus:ring-1 focus:ring-sky-600"
+              className="w-full py-2 px-3 rounded-lg border border-slate-200 bg-white text-xs text-slate-800 font-medium focus:outline-none focus:ring-1 focus:ring-sky-600"
             >
-              <option value="None">None (All Units Operational)</option>
+              <option value="None">None — all units operational</option>
               {isBharati ? (
                 <>
-                  <option value="CHP-1">CHP-1 Trip</option>
-                  <option value="CHP-2">CHP-2 Trip</option>
-                  <option value="CHP-3">CHP-3 Trip (Severe Heat Exchanger Fault)</option>
+                  <option value="CHP-1">CHP-1 trip</option>
+                  <option value="CHP-2">CHP-2 trip</option>
+                  <option value="CHP-3">CHP-3 trip (heat exchanger fault)</option>
                 </>
               ) : (
                 <>
-                  <option value="DG-1">DG-1 Outage</option>
-                  <option value="DG-2">DG-2 Outage</option>
-                  <option value="DG-3">DG-3 Standby Failure</option>
+                  <option value="DG-1">DG-1 outage</option>
+                  <option value="DG-2">DG-2 outage</option>
+                  <option value="DG-3">DG-3 standby failure</option>
                 </>
               )}
             </select>
           </div>
 
-          {/* Wind Severity Segmented */}
-          <div className="space-y-1.5 text-xs">
-            <label className="font-semibold text-slate-700">Wind Severity</label>
+          {/* Wind Severity */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-slate-700">Wind severity</label>
             <div className="grid grid-cols-3 gap-1 bg-slate-100 p-1 rounded-lg">
               {['Normal', 'High', 'Extreme'].map((w) => (
                 <button
                   key={w}
                   type="button"
                   onClick={() => setWindSeverity(w)}
-                  className={`py-1.5 rounded-md font-medium text-xs transition-colors ${
-                    windSeverity === w ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                  className={`py-1.5 rounded-md text-xs font-medium transition-colors ${
+                    windSeverity === w ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800'
                   }`}
                 >
                   {w}
@@ -232,16 +219,16 @@ export function ScenarioSimulatorPage() {
           </div>
 
           {/* Satellite Connectivity */}
-          <div className="space-y-1.5 text-xs">
-            <label className="font-semibold text-slate-700">Satellite Link Quality</label>
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-slate-700">Satellite link</label>
             <div className="grid grid-cols-3 gap-1 bg-slate-100 p-1 rounded-lg">
               {['Normal', 'Degraded', 'Offline'].map((s) => (
                 <button
                   key={s}
                   type="button"
                   onClick={() => setSatelliteConn(s)}
-                  className={`py-1.5 rounded-md font-medium text-xs transition-colors ${
-                    satelliteConn === s ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                  className={`py-1.5 rounded-md text-xs font-medium transition-colors ${
+                    satelliteConn === s ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800'
                   }`}
                 >
                   {s}
@@ -251,16 +238,16 @@ export function ScenarioSimulatorPage() {
           </div>
 
           {/* Water Pump */}
-          <div className="space-y-1.5 text-xs">
-            <label className="font-semibold text-slate-700">Water Pump Intake Status</label>
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-slate-700">Water pump intake</label>
             <div className="grid grid-cols-2 gap-1 bg-slate-100 p-1 rounded-lg">
               {['Normal', 'Failed'].map((p) => (
                 <button
                   key={p}
                   type="button"
                   onClick={() => setWaterPumpStatus(p)}
-                  className={`py-1.5 rounded-md font-medium text-xs transition-colors ${
-                    waterPumpStatus === p ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                  className={`py-1.5 rounded-md text-xs font-medium transition-colors ${
+                    waterPumpStatus === p ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800'
                   }`}
                 >
                   {p}
@@ -268,96 +255,82 @@ export function ScenarioSimulatorPage() {
               ))}
             </div>
           </div>
+
+          <p className="text-[10px] text-slate-400 pt-1">
+            Results update automatically as parameters change.
+          </p>
         </div>
 
-        {/* Run Simulation Action Button */}
-        <div className="pt-3 border-t border-slate-100 flex justify-end">
-          <button
-            type="button"
-            onClick={handleRunSimulation}
-            className="px-5 py-2.5 rounded-lg bg-sky-800 hover:bg-sky-900 text-white font-semibold text-xs transition-colors flex items-center gap-2 shadow-xs cursor-pointer"
-          >
-            <Play className="w-3.5 h-3.5 fill-current" />
-            <span>RUN SIMULATION</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Simulation Results Section */}
-      {isSimulated && (
-        <div className="space-y-6">
-          <div className="bg-white rounded-xl border border-slate-200/90 p-6 shadow-xs space-y-5">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <div>
-                <h2 className="text-base font-bold text-slate-900 tracking-tight">
-                  Simulation Outcome & Prognostic Assessment
-                </h2>
-                <p className="text-xs text-slate-500">
-                  Calculated coupled physical model impact under specified stress factors
-                </p>
-              </div>
-
-              <div>
-                <StatusBadge status={results.overallRisk} size="md" />
-              </div>
+        {/* ---------------- RESULTS PANEL ---------------- */}
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 sm:p-6 space-y-5">
+          <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+            <div>
+              <h2 className="text-sm font-bold text-slate-900">Projected outcome</h2>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Coupled physical model impact under the selected conditions
+              </p>
             </div>
+            <StatusBadge status={results.overallRisk} size="md" />
+          </div>
 
-            {/* Key Impact Metric Cards */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 text-xs">
-              <div className="p-3 rounded-lg bg-slate-50 border border-slate-100">
-                <span className="text-[10px] font-semibold text-slate-400 uppercase">Heating Demand</span>
-                <div className="text-lg font-bold text-slate-900 mt-1">{results.heatingDemandDelta}</div>
+          {/* Key metrics */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {[
+              { label: 'Heating demand', value: results.heatingDemandDelta },
+              { label: 'Fuel burn rate', value: results.fuelConsumptionDelta, warn: true },
+              { label: 'Available power', value: results.availablePower, mono: true },
+              { label: 'Fuel runway', value: results.fuelRunway, warn: true, mono: true },
+              { label: 'Resupply in', value: results.nextResupply, mono: true },
+              { label: 'Resource deficit', value: results.resourceDeficit, critical: true, mono: true },
+            ].map((m) => (
+              <div key={m.label} className="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                <div className="text-[10px] text-slate-400">{m.label}</div>
+                <div
+                  className={`text-base font-bold mt-1 transition-colors duration-300 ${m.mono ? 'font-mono text-[15px]' : ''} ${
+                    m.critical && isDeficit
+                      ? 'text-rose-700'
+                      : m.warn
+                      ? 'text-amber-700'
+                      : 'text-slate-900'
+                  }`}
+                >
+                  {m.value}
+                </div>
               </div>
+            ))}
+          </div>
 
-              <div className="p-3 rounded-lg bg-slate-50 border border-slate-100">
-                <span className="text-[10px] font-semibold text-slate-400 uppercase">Fuel Burn Rate</span>
-                <div className="text-lg font-bold text-amber-900 mt-1">{results.fuelConsumptionDelta}</div>
-              </div>
-
-              <div className="p-3 rounded-lg bg-slate-50 border border-slate-100">
-                <span className="text-[10px] font-semibold text-slate-400 uppercase">Available Power</span>
-                <div className="text-lg font-bold text-slate-900 mt-1 font-mono">{results.availablePower}</div>
-              </div>
-
-              <div className="p-3 rounded-lg bg-slate-50 border border-slate-100">
-                <span className="text-[10px] font-semibold text-slate-400 uppercase">Fuel Runway</span>
-                <div className="text-lg font-bold text-amber-900 mt-1 font-mono">{results.fuelRunway}</div>
-              </div>
-
-              <div className="p-3 rounded-lg bg-slate-50 border border-slate-100">
-                <span className="text-[10px] font-semibold text-slate-400 uppercase">Resupply Target</span>
-                <div className="text-lg font-bold text-slate-900 mt-1 font-mono">{results.nextResupply}</div>
-              </div>
-
-              <div className="p-3 rounded-lg bg-slate-50 border border-slate-100">
-                <span className="text-[10px] font-semibold text-slate-400 uppercase">Resource Deficit</span>
-                <div className="text-lg font-bold text-rose-700 mt-1 font-mono">{results.resourceDeficit}</div>
-              </div>
+          {isDeficit && (
+            <div className="flex items-start gap-2.5 px-4 py-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900">
+              <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+              <span>
+                Under these conditions, fuel runway falls short of the resupply horizon by{' '}
+                <strong>{results.resourceDeficit}</strong>.
+              </span>
             </div>
+          )}
 
-            {/* Prioritized Recommended Operational Actions */}
-            <div className="pt-3 border-t border-slate-100 space-y-3">
-              <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
-                Prioritized Operational Decision Directives
-              </h3>
-
-              <div className="space-y-2">
-                {results.actions.map((act, idx) => (
-                  <div
-                    key={idx}
-                    className="p-3 rounded-lg bg-slate-50 border border-slate-200/80 text-xs text-slate-800 flex items-start gap-3"
-                  >
-                    <span className="w-5 h-5 rounded-full bg-slate-200 text-slate-800 font-bold text-[11px] flex items-center justify-center shrink-0">
-                      {idx + 1}
-                    </span>
-                    <span className="mt-0.5">{act}</span>
-                  </div>
-                ))}
-              </div>
+          {/* Prioritized actions */}
+          <div className="pt-1 space-y-2.5">
+            <h3 className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide">
+              Recommended actions
+            </h3>
+            <div className="space-y-2">
+              {results.actions.map((act, idx) => (
+                <div
+                  key={idx}
+                  className="flex items-start gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100 text-xs text-slate-700"
+                >
+                  <span className="w-5 h-5 rounded-full bg-slate-200 text-slate-700 font-bold text-[11px] flex items-center justify-center shrink-0 mt-0.5">
+                    {idx + 1}
+                  </span>
+                  <span className="leading-relaxed">{act}</span>
+                </div>
+              ))}
             </div>
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }
