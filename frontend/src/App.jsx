@@ -4,7 +4,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 // Layouts
 import MissionControlLayout from './layouts/MissionControlLayout.jsx';
 import StationDashboardLayout from './layouts/StationDashboardLayout.jsx';
-
+import ImpactAnalysis from "../src/pages/ImpactAnalysis.jsx"
 import LandingPage from './pages/LandingPage.jsx';
 import SystemDetailsPage from './pages/SystemDetailsPage.jsx';
 import DependencyMapPage from './pages/DependencyMapPage.jsx';
@@ -45,10 +45,9 @@ export default function App() {
           <Route path="logistics" element={<LogisticsPage />} />
           <Route path="tracking" element={<VesselTrackingPage />} />
           <Route path="environment" element={<EnvironmentHistoricalPage />} />
-
+          <Route path="impact-analysis" element={<ImpactAnalysis />} />
         </Route>
 
-       
         <Route path="/operations" element={<MissionControlLayout />}>
           <Route path="compare" element={<StationComparisonPage />} />
         </Route>
