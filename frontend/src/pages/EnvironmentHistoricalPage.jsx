@@ -1,228 +1,235 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import {
   ResponsiveContainer,
-  AreaChart,
-  Area,
+  LineChart,
+  Line,
   XAxis,
   YAxis,
   Tooltip,
   CartesianGrid,
+  Legend
 } from 'recharts';
-import { Thermometer, Wind, Compass, Gauge, Droplets } from 'lucide-react';
-import DataSourceBadge from '../components/common/DataSourceBadge.jsx';
-import { STATIONS } from '../data/stationConfig.js';
+import { Download, Activity, Thermometer, Wind, Gauge, Droplets } from 'lucide-react';
 import environmentService from '../services/environmentService.js';
 
-function ChartTooltip({ active, payload, label, unit, metricLabel }) {
-  if (!active || !payload?.length) return null;
-  return (
-    <div className="bg-slate-900/90 border border-white/10 rounded-lg shadow-lg px-3 py-2 text-xs backdrop-blur-sm">
-      <div className="text-slate-400">{label}</div>
-      <div className="font-semibold text-white mt-0.5">
-        {metricLabel}: {payload[0].value} {unit}
-      </div>
-    </div>
-  );
-}
-
 export function EnvironmentHistoricalPage() {
-  const { stationId = 'bharati' } = useParams();
-  const currentStationCode = stationId.toLowerCase() === 'maitri' ? 'MTR' : 'BHT';
-  const station = STATIONS[currentStationCode] || STATIONS.BHT;
+  const { stationId = 'maitri' } = useParams();
+  const currentStationCode = stationId.toLowerCase() === 'bharati' ? 'BHT' : 'MTR';
+  const stationName = currentStationCode === 'BHT' ? 'Bharati' : 'Maitri';
 
-  const [selectedMetric, setSelectedMetric] = useState('temperature');
-  const [selectedRange, setSelectedRange] = useState('24h'); // '24h' | '7d' | '30d'
+  const [selectedRange, setSelectedRange] = useState('24h');
+  
+  // Naya State: Switch between 'all' or individual metrics
+  const [activeView, setActiveView] = useState('all'); 
+  
+  const [chartData, setChartData] = useState({ data: [], stats: null });
+  const [currentWeather, setCurrentWeather] = useState(null);
 
-  const series = environmentService.getHistoricalSeries(currentStationCode, selectedMetric, selectedRange);
+  useEffect(() => {
+    const series = environmentService.getCombinedHistoricalSeries(currentStationCode, selectedRange);
+    setChartData(series);
+    environmentService.getStationWeather(currentStationCode).then(res => setCurrentWeather(res));
+  }, [currentStationCode, selectedRange]);
 
-  const metricsConfig = [
-    { id: 'temperature', label: 'Temperature', icon: Thermometer, unit: '°C' },
-    { id: 'windSpeed', label: 'Wind Speed', icon: Wind, unit: 'm/s' },
-    { id: 'windDirection', label: 'Wind Direction', icon: Compass, unit: 'deg' },
-    { id: 'pressure', label: 'Air Pressure', icon: Gauge, unit: 'hPa' },
-    { id: 'humidity', label: 'Relative Humidity', icon: Droplets, unit: '%' },
+  const currentDate = new Date().toLocaleDateString('en-GB', {
+    day: '2-digit', month: 'short', year: 'numeric'
+  });
+
+  // Views Configuration
+  const views = [
+    { id: 'all', label: 'All Live Data', icon: Activity },
+    { id: 'temperature', label: 'Air Temperature', icon: Thermometer, color: '#ef4444' },
+    { id: 'windSpeed', label: 'Wind Speed', icon: Wind, color: '#3b82f6' },
+    { id: 'pressure', label: 'Air Pressure', icon: Gauge, color: '#0f172a' },
+    { id: 'humidity', label: 'Relative Humidity', icon: Droplets, color: '#22c55e' },
   ];
 
-  const activeMetric = metricsConfig.find((m) => m.id === selectedMetric);
-
-  // Forces the chart to fully remount — and its fill/line to animate in from
-  // zero — every time the metric or time range selection changes.
-  const chartInstanceKey = `${currentStationCode}-${selectedMetric}-${selectedRange}`;
-
   return (
-    <div className="max-w-5xl mx-auto px-3 sm:px-4 pb-10 space-y-4">
-      <style>{`
-        @keyframes eh-drift-a { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(3%, -4%) scale(1.08); } }
-        @keyframes eh-drift-b { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(-4%, 3%) scale(1.05); } }
-        @keyframes eh-fade-up { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-        .eh-glow-a { animation: eh-drift-a 16s ease-in-out infinite; }
-        .eh-glow-b { animation: eh-drift-b 20s ease-in-out infinite; }
-        .eh-panel-in { animation: eh-fade-up .5s ease-out both; }
-        @media (prefers-reduced-motion: reduce) {
-          .eh-glow-a, .eh-glow-b, .eh-panel-in { animation: none; }
-        }
-      `}</style>
-
-      {/* Header */}
-      <div className="pt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl font-bold text-slate-900">Atmospheric Observatory</h1>
-            <DataSourceBadge type="LIVE · NCPOR" />
-          </div>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Historical met mast telemetry from {station.name} Station
-          </p>
+    <div className="max-w-7xl mx-auto px-4 py-6 space-y-4">
+      
+      {/* NPDC Style Dark Blue Header */}
+      <div className="bg-[#0b1c3c] text-white rounded-lg flex flex-col md:flex-row justify-between items-center px-6 py-4 shadow-md border-b-4 border-sky-500">
+        <div className="text-lg font-semibold tracking-wide">
+          {currentDate}
         </div>
+        
+        {currentWeather && (
+          <div className="flex flex-col md:flex-row gap-x-12 gap-y-2 text-sm mt-4 md:mt-0">
+            <div className="flex flex-col items-end">
+              <span><span className="text-sky-300">Temperature:</span> {currentWeather.temperature}° C</span>
+              <span><span className="text-emerald-400">Air Pressure:</span> {currentWeather.pressure} mBar</span>
+            </div>
+            <div className="flex flex-col items-end">
+              <span><span className="text-sky-300">Relative Humidity:</span> {currentWeather.humidity}%</span>
+              <span><span className="text-emerald-400">Wind Speed:</span> {currentWeather.windSpeed} m/s</span>
+            </div>
+          </div>
+        )}
+      </div>
 
-        {/* Time Range Selector */}
-        <div className="flex items-center gap-1 bg-white p-1 rounded-lg border border-slate-200 text-xs shrink-0">
-          {[
-            { id: '24h', label: '24H' },
-            { id: '7d', label: '7D' },
-            { id: '30d', label: '30D' },
-          ].map((r) => (
+      {/* View Selector Tabs (New Feature) */}
+      <div className="flex flex-wrap gap-2 bg-white p-2 rounded-lg border border-slate-200 shadow-sm">
+        {views.map(view => {
+          const Icon = view.icon;
+          const isActive = activeView === view.id;
+          return (
             <button
-              key={r.id}
-              onClick={() => setSelectedRange(r.id)}
-              className={`px-3 py-1.5 rounded-md font-semibold transition-colors ${
-                selectedRange === r.id
-                  ? 'bg-slate-900 text-white'
-                  : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
+              key={view.id}
+              onClick={() => setActiveView(view.id)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-semibold transition-all ${
+                isActive 
+                  ? 'bg-slate-900 text-white shadow-md' 
+                  : 'bg-slate-50 text-slate-600 hover:bg-slate-100 hover:text-slate-900 border border-slate-200'
               }`}
             >
-              {r.label}
+              <Icon className="w-4 h-4" />
+              {view.label}
             </button>
-          ))}
+          );
+        })}
+      </div>
+
+      {/* Main Chart Container */}
+      <div className="bg-white border border-slate-200 shadow-sm rounded-lg p-2 md:p-4">
+        <h2 className="text-center font-bold text-[#6b21a8] text-lg mb-6">
+          Antarctica - {stationName} {activeView !== 'all' && `(${views.find(v => v.id === activeView)?.label})`}
+        </h2>
+
+        <div className="h-[450px] w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={chartData.data} margin={{ top: 20, right: 30, left: 10, bottom: 20 }}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+              <XAxis dataKey="time" tick={{ fontSize: 11, fill: '#64748b' }} tickMargin={10} />
+              <Tooltip contentStyle={{ backgroundColor: 'rgba(255, 255, 255, 0.95)', borderRadius: '8px', border: '1px solid #cbd5e1' }} itemStyle={{ fontWeight: 'bold' }} />
+              <Legend verticalAlign="bottom" height={36} wrapperStyle={{ fontSize: '12px', fontWeight: 'bold', paddingTop: '20px' }}/>
+              
+              {/* Conditionally Render Axes and Lines based on activeView */}
+              
+              {/* Temperature */}
+              {(activeView === 'all' || activeView === 'temperature') && (
+                <React.Fragment>
+                  <YAxis yAxisId="temp" orientation="left" stroke="#ef4444" tick={{ fontSize: 11 }} domain={['auto', 'auto']} label={{ value: 'Temperature °C', angle: -90, position: 'insideLeft', fill: '#ef4444', style: { fontWeight: 'bold' }, dx: -10 }} />
+                  <Line yAxisId="temp" type="linear" dataKey="temperature" name="Temperature" stroke="#ef4444" strokeWidth={2} dot={false} activeDot={{ r: 6 }} />
+                </React.Fragment>
+              )}
+
+              {/* Wind Speed */}
+              {(activeView === 'all' || activeView === 'windSpeed') && (
+                <React.Fragment>
+                  <YAxis yAxisId="wind" orientation="left" stroke="#3b82f6" tick={{ fontSize: 11 }} domain={['auto', 'auto']} label={{ value: 'Wind Speed (m/s)', angle: -90, position: 'insideLeft', fill: '#3b82f6', style: { fontWeight: 'bold' } }} />
+                  <Line yAxisId="wind" type="linear" dataKey="windSpeed" name="Wind Speed" stroke="#3b82f6" strokeWidth={2} dot={false} activeDot={{ r: 6 }} />
+                </React.Fragment>
+              )}
+
+              {/* Air Pressure */}
+              {(activeView === 'all' || activeView === 'pressure') && (
+                <React.Fragment>
+                  {/* Agar individual view hai toh axis left me dikhegi, All hai toh right me */}
+                  <YAxis yAxisId="pressure" orientation={activeView === 'all' ? "right" : "left"} stroke="#0f172a" tick={{ fontSize: 11 }} domain={['dataMin - 2', 'dataMax + 2']} label={{ value: 'Air Pressure (mBar)', angle: activeView === 'all' ? 90 : -90, position: activeView === 'all' ? 'insideRight' : 'insideLeft', fill: '#0f172a', style: { fontWeight: 'bold' } }} />
+                  <Line yAxisId="pressure" type="linear" dataKey="pressure" name="Air Pressure" stroke="#0f172a" strokeWidth={2} dot={false} activeDot={{ r: 6 }} />
+                </React.Fragment>
+              )}
+
+              {/* Humidity */}
+              {(activeView === 'all' || activeView === 'humidity') && (
+                <React.Fragment>
+                  <YAxis yAxisId="humidity" orientation={activeView === 'all' ? "right" : "left"} stroke="#22c55e" tick={{ fontSize: 11 }} domain={[0, 100]} label={{ value: 'Relative Humidity (%)', angle: activeView === 'all' ? 90 : -90, position: activeView === 'all' ? 'insideRight' : 'insideLeft', fill: '#22c55e', style: { fontWeight: 'bold' }, dx: activeView === 'all' ? 10 : -10 }} />
+                  <Line yAxisId="humidity" type="linear" dataKey="humidity" name="Relative Humidity" stroke="#22c55e" strokeWidth={2} dot={false} activeDot={{ r: 6 }} />
+                </React.Fragment>
+              )}
+            </LineChart>
+          </ResponsiveContainer>
         </div>
       </div>
 
-      {/* Metric selector — glass cards over a soft icy backdrop */}
-      <div className="relative rounded-2xl overflow-hidden p-3 bg-gradient-to-br from-sky-100 via-slate-100 to-sky-50">
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 relative">
-          {metricsConfig.map((m) => {
-            const isSelected = selectedMetric === m.id;
-            const IconComp = m.icon;
-            return (
-              <button
-                key={m.id}
-                onClick={() => setSelectedMetric(m.id)}
-                className={`relative p-3 rounded-xl border text-left transition-all duration-200 backdrop-blur-md ${
-                  isSelected
-                    ? 'bg-white/70 border-sky-400 shadow-md ring-1 ring-sky-300'
-                    : 'bg-white/40 border-white/60 hover:bg-white/60 text-slate-700'
-                }`}
-              >
-                <div className="flex items-center justify-between mb-1.5">
-                  <div
-                    className={`w-7 h-7 rounded-lg flex items-center justify-center ${
-                      isSelected ? 'bg-sky-600 text-white' : 'bg-white/70 text-slate-500'
-                    }`}
-                  >
-                    <IconComp className="w-3.5 h-3.5" />
-                  </div>
-                  <span className="text-[10px] font-mono text-slate-400">{m.unit}</span>
-                </div>
-                <div
-                  className={`text-xs font-semibold ${isSelected ? 'text-slate-900' : 'text-slate-600'}`}
+      {/* NPDC Style Stats Table */}
+      {chartData.stats && (
+        <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden mt-6">
+          <div className="p-3 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
+            <button className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold px-3 py-1.5 rounded flex items-center gap-1.5 transition-colors">
+              <Download className="w-4 h-4" /> Save as Image
+            </button>
+            <div className="flex gap-2 text-xs">
+              {['24h', '7d', '30d'].map((range) => (
+                <button
+                  key={range}
+                  onClick={() => setSelectedRange(range)}
+                  className={`px-3 py-1.5 font-semibold border rounded transition-colors ${selectedRange === range ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-slate-600 hover:bg-slate-100'}`}
                 >
-                  {m.label}
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Chart panel — dark, icy backdrop, filled area, replays on selection */}
-      <div className="eh-panel-in relative rounded-2xl overflow-hidden shadow-lg" key={chartInstanceKey}>
-        {/* Generated icy / aurora backdrop — decorative, no external image */}
-        <div className="absolute inset-0 bg-gradient-to-b from-[#050d1c] via-[#0b1f3a] to-[#0e2a4d]">
-          <div className="eh-glow-a absolute -top-16 -left-10 w-72 h-72 rounded-full bg-sky-500/25 blur-3xl" />
-          <div className="eh-glow-b absolute bottom-0 right-0 w-80 h-80 rounded-full bg-cyan-400/15 blur-3xl" />
-          <svg
-            className="absolute bottom-0 left-0 right-0 w-full opacity-25 blur-[1px]"
-            viewBox="0 0 800 160"
-            preserveAspectRatio="none"
-          >
-            <path
-              d="M0,140 L80,90 L160,120 L240,60 L320,110 L420,40 L500,100 L600,70 L680,130 L760,85 L800,120 L800,160 L0,160 Z"
-              fill="rgba(186,230,253,0.18)"
-            />
-            <path
-              d="M0,150 L100,120 L220,145 L340,100 L460,140 L580,110 L700,150 L800,130 L800,160 L0,160 Z"
-              fill="rgba(224,242,254,0.12)"
-            />
-          </svg>
-        </div>
-
-        <div className="relative px-4 sm:px-6 py-5 space-y-5">
-          {/* Stats — glass chips */}
-          <div className="grid grid-cols-3 gap-3">
-            {[
-              { label: 'Average', value: series.stats.average, color: 'text-white' },
-              { label: 'Minimum', value: series.stats.minimum, color: 'text-cyan-300' },
-              { label: 'Maximum', value: series.stats.maximum, color: 'text-amber-300' },
-            ].map((s) => (
-              <div
-                key={s.label}
-                className="rounded-xl px-3 py-2.5 bg-white/10 border border-white/10 backdrop-blur-md"
-              >
-                <div className="text-[10px] uppercase tracking-wide text-slate-300">{s.label}</div>
-                <div className={`text-lg font-bold mt-0.5 tabular-nums font-mono ${s.color}`}>
-                  {s.value} <span className="text-xs text-slate-300">{series.stats.unit}</span>
-                </div>
-              </div>
-            ))}
+                  {range.toUpperCase()}
+                </button>
+              ))}
+            </div>
           </div>
+          
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm text-center">
+              <thead className="text-slate-700 bg-slate-50 font-bold border-b border-slate-200">
+                <tr>
+                  <th className="py-3 px-4 w-1/5">Data</th>
+                  <th className="py-3 px-4 w-1/5">Average</th>
+                  <th className="py-3 px-4 w-1/5">Data</th>
+                  <th className="py-3 px-4 w-1/5">Minimum</th>
+                  <th className="py-3 px-4 w-1/5">Data</th>
+                  <th className="py-3 px-4 w-1/5">Maximum</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 text-slate-600">
+                
+                {/* Dynamically hide/show table rows based on activeView */}
+                {(activeView === 'all' || activeView === 'temperature') && (
+                  <tr className="hover:bg-slate-50">
+                    <td className="py-3 px-4">Temperature</td>
+                    <td className="py-3 px-4 font-semibold">{chartData.stats.temperature.avg} °C</td>
+                    <td className="py-3 px-4">Temperature</td>
+                    <td className="py-3 px-4 font-semibold">{chartData.stats.temperature.min} °C</td>
+                    <td className="py-3 px-4">Temperature</td>
+                    <td className="py-3 px-4 font-semibold">{chartData.stats.temperature.max} °C</td>
+                  </tr>
+                )}
 
-          {/* Filled trend chart */}
-          <div className="h-72 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={series.data} margin={{ top: 10, right: 15, left: -15, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="eh-fill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#38bdf8" stopOpacity={0.55} />
-                    <stop offset="100%" stopColor="#38bdf8" stopOpacity={0.02} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" vertical={false} />
-                <XAxis dataKey="time" stroke="rgba(226,232,240,0.5)" fontSize={11} tickLine={false} axisLine={false} />
-                <YAxis
-                  stroke="rgba(226,232,240,0.5)"
-                  fontSize={11}
-                  tickLine={false}
-                  axisLine={false}
-                  domain={['auto', 'auto']}
-                />
-                <Tooltip
-                  content={
-                    <ChartTooltip unit={series.stats.unit} metricLabel={activeMetric?.label} />
-                  }
-                />
-                <Area
-                  type="monotone"
-                  dataKey="value"
-                  stroke="#7dd3fc"
-                  strokeWidth={2.5}
-                  fill="url(#eh-fill)"
-                  dot={false}
-                  activeDot={{ r: 5, fill: '#7dd3fc', stroke: '#0b1f3a', strokeWidth: 2 }}
-                  isAnimationActive
-                  animationDuration={1300}
-                  animationEasing="ease-out"
-                />
-              </AreaChart>
-            </ResponsiveContainer>
+                {(activeView === 'all' || activeView === 'windSpeed') && (
+                  <tr className="hover:bg-slate-50">
+                    <td className="py-3 px-4">Wind Speed</td>
+                    <td className="py-3 px-4 font-semibold">{chartData.stats.windSpeed.avg} m/s</td>
+                    <td className="py-3 px-4">Wind Speed</td>
+                    <td className="py-3 px-4 font-semibold">{chartData.stats.windSpeed.min} m/s</td>
+                    <td className="py-3 px-4">Wind Speed</td>
+                    <td className="py-3 px-4 font-semibold">{chartData.stats.windSpeed.max} m/s</td>
+                  </tr>
+                )}
+
+                {(activeView === 'all' || activeView === 'pressure') && (
+                  <tr className="hover:bg-slate-50">
+                    <td className="py-3 px-4">Air Pressure</td>
+                    <td className="py-3 px-4 font-semibold">{chartData.stats.pressure.avg} hPa</td>
+                    <td className="py-3 px-4">Air Pressure</td>
+                    <td className="py-3 px-4 font-semibold">{chartData.stats.pressure.min} hPa</td>
+                    <td className="py-3 px-4">Air Pressure</td>
+                    <td className="py-3 px-4 font-semibold">{chartData.stats.pressure.max} hPa</td>
+                  </tr>
+                )}
+
+                {(activeView === 'all' || activeView === 'humidity') && (
+                  <tr className="hover:bg-slate-50">
+                    <td className="py-3 px-4">Rel. Humidity</td>
+                    <td className="py-3 px-4 font-semibold">{chartData.stats.humidity.avg} %</td>
+                    <td className="py-3 px-4">Rel. Humidity</td>
+                    <td className="py-3 px-4 font-semibold">{chartData.stats.humidity.min} %</td>
+                    <td className="py-3 px-4">Rel. Humidity</td>
+                    <td className="py-3 px-4 font-semibold">{chartData.stats.humidity.max} %</td>
+                  </tr>
+                )}
+
+              </tbody>
+            </table>
           </div>
-
-          <div className="pt-3 border-t border-white/10 flex items-center justify-between text-[11px] text-slate-300">
-            <span>Source: NCPOR Automatic Weather Station (AWS) Array</span>
-            <span>Calibrated against WMO Antarctic Baseline</span>
+          <div className="bg-slate-50 text-[10px] text-center py-2 text-slate-500 border-t border-slate-200">
+            Copyright © National Polar Data Center, NCPOR, MoES, Govt of India. All Rights Reserved.
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
