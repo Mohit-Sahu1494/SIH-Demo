@@ -64,7 +64,7 @@ export function StationSwitcher({ currentStationCode = 'BHT', onSelectStation, s
               return (
                 <button
                   key={station.code}
-                  onClick={() => handleSelect(station.code)}
+                  onClick={() => handleSelect(station.name)}
                   className={`w-full flex items-center justify-between px-3 py-2.5 text-sm rounded-md transition-colors text-left ${
                     isSelected ? 'bg-slate-50 text-slate-900 font-medium' : 'text-slate-700 hover:bg-slate-50/80'
                   }`}
@@ -81,13 +81,7 @@ export function StationSwitcher({ currentStationCode = 'BHT', onSelectStation, s
               );
             })}
           </div>
-
-          <div className="px-3 py-2 border-t border-slate-100 bg-slate-50/50 rounded-b-lg">
-            <span className="text-[11px] text-slate-500 flex items-center gap-1.5">
-              <Radio className="w-3 h-3 text-slate-400" />
-              Direct telemetry stream switch
-            </span>
-          </div>
+          
         </div>
       )}
     </div>

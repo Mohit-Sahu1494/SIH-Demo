@@ -105,14 +105,6 @@ export function MissionControlLayout() {
               onSelectStation={handleStationSwitch}
               status={currentTel?.stationStatus || 'Operational'}
             />
-
-            <div className="hidden md:flex items-center gap-2 pl-3 border-l border-slate-200 text-xs text-slate-500">
-              <span className="font-mono text-[11px] text-slate-600 font-medium">
-                {currentStation.location.latitude}, {currentStation.location.longitude}
-              </span>
-              <span className="text-slate-300">•</span>
-              <span>{currentStation.waterSource}</span>
-            </div>
           </div>
 
           {/* Right Header Status Telemetry */}
