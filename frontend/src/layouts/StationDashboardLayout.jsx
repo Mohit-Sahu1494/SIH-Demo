@@ -16,7 +16,7 @@ import MissionControlHeader from '../components/common/MissionControlHeader.jsx'
 import StationDashboard from '../pages/StationDashboard.jsx';
 import telemetryEngine from '../simulation/telemetryEngine.js';
 import { STATIONS } from '../data/stationConfig.js';
-import Bg from '../assets/bg.png';
+import Bg from '../assets/Bg.png';
 
 export function StationDashboardLayout() {
   const { stationId = 'bharati' } = useParams();
