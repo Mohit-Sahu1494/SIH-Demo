@@ -33,15 +33,26 @@ export function AlertCenterPage() {
 
   // Build Alert List
   const alerts = useMemo(() => {
-    const inj = telemetry.injections || {};
+    const stress = telemetry.scenarioStress || {};
+    const hasChpFail = (stress.chpFailure && stress.chpFailure !== 'None') ||
+      telemetry.power?.chp1?.status === 'Critical' ||
+      telemetry.power?.chp2?.status === 'Critical' ||
+      telemetry.power?.chp3?.status === 'Critical';
+    const failedChpName = stress.chpFailure && stress.chpFailure !== 'None' ? stress.chpFailure : 'CHP-3';
+
+    const hasPumpFail = stress.waterPumpStatus === 'Failed' || telemetry.water?.pumpStatus === 'Critical';
+    const hasFuelLow = (stress.fuelReservePercent !== undefined && stress.fuelReservePercent <= 25) || (telemetry.fuel?.reservePercent <= 25);
+    const hasSatLost = stress.satelliteConn === 'Offline' || telemetry.satellite?.isLost;
+    const hasExtremeCold = (stress.temperature !== undefined && stress.temperature <= -35);
+
     const list = [];
 
-    if (inj.chpFailure) {
+    if (hasChpFail) {
       list.push({
         id: 'ALR-PWR-01', severity: 'Critical', icon: Zap,
-        title: isBharati ? 'CHP-3 Trip — Thermal Overload' : 'DG-2 Genset Trip Emergency',
-        systemId: isBharati ? 'chp-3' : 'power-system',
-        sysName: isBharati ? 'SYS-CHP-03 (Power)' : 'SYS-DG-02 (Power)',
+        title: isBharati ? `${failedChpName} Trip — Thermal Overheat` : 'DG Genset Trip Emergency',
+        systemId: isBharati ? failedChpName.toLowerCase() : 'power-system',
+        sysName: isBharati ? `SYS-${failedChpName} (Power)` : 'SYS-DG-02 (Power)',
         message: 'Unit tripped due to operating temperature exceeding 94°C. 120 kVA generating capacity lost.',
         action: 'Inspect cooling circuit. Initiate manual start of standby unit.',
         time: 'T-00:00',
@@ -58,13 +69,13 @@ export function AlertCenterPage() {
       });
     }
 
-    if (inj.pumpFailure) {
+    if (hasPumpFail) {
       list.push({
         id: 'ALR-WTR-01', severity: 'Critical', icon: Droplets,
         title: isBharati ? 'Sea Intake Frozen — Zero Flow' : 'Lake Intake Blockage Detected',
         systemId: isBharati ? 'sea-water-pump' : 'lake-water-pump',
         sysName: isBharati ? 'SYS-SWP-01 (Water)' : 'SYS-LWP-01 (Water)',
-        message: 'Intake flow rate dropped to 0 L/s. Frazil ice accumulation confirmed in primary conduit.',
+        message: 'Intake flow rate dropped to 0 L/s. Pump motor tripped on overcurrent protection.',
         action: 'Activate high-current trace heating pulse sequence on intake line.',
         time: 'T-00:01',
       });
@@ -80,7 +91,7 @@ export function AlertCenterPage() {
       });
     }
 
-    if (inj.satelliteFailure) {
+    if (hasSatLost) {
       list.push({
         id: 'ALR-COM-01', severity: 'Critical', icon: Radio,
         title: 'Satellite Link Lost — Blackout',
@@ -92,15 +103,27 @@ export function AlertCenterPage() {
       });
     }
 
-    if (inj.lowFuel || telemetry.fuel?.isDeficit) {
+    if (hasFuelLow || telemetry.fuel?.isDeficit) {
       list.push({
         id: 'ALR-FUL-01', severity: 'Critical', icon: Flame,
         title: 'Fuel Reserve Critical Violation',
         systemId: 'fuel-farm',
         sysName: 'SYS-FF-01 (Fuel Farm)',
-        message: `Reserve volume at ${telemetry.fuel?.reservePercent}%. Runway: ${telemetry.fuel?.runwayDays} days. Resupply deficit: ${telemetry.fuel?.nextResupplyDays - telemetry.fuel?.runwayDays} days.`,
+        message: `Reserve volume at ${telemetry.fuel?.reservePercent || stress.fuelReservePercent}%. Runway: ${telemetry.fuel?.runwayDays} days. Resupply deficit detected.`,
         action: 'Enforce Conservation Protocol Level-3. Reduce global HVAC setpoint by 2°C.',
         time: 'T-00:03',
+      });
+    }
+
+    if (hasExtremeCold) {
+      list.push({
+        id: 'ALR-ENV-01', severity: 'Critical', icon: AlertTriangle,
+        title: `Blizzard Alert — Extreme Polar Cold (${stress.temperature}°C)`,
+        systemId: 'hvac',
+        sysName: 'SYS-HVAC-01 (Climate)',
+        message: `Outside air temperature dropped to ${stress.temperature}°C. Heating demand surging above 95%.`,
+        action: 'Seal auxiliary zones and engage secondary glycol heating loop.',
+        time: 'T-00:02',
       });
     }
 

@@ -1,6 +1,6 @@
 export const simulatorConfig = {
   stations: ['BHT', 'MTR'],
-  tickIntervalMs: 5000, // Strictly 5 seconds per requirement
+  tickIntervalMs: 7000, // Strictly 7 seconds per real-time requirement
   assets: [
     'GEN-01',
     'GEN-02',

@@ -1,54 +1,73 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useParams } from 'react-router-dom';
-import { RotateCcw, AlertTriangle } from 'lucide-react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { RotateCcw, AlertTriangle, ArrowRight, GitFork, Activity, CheckCircle2 } from 'lucide-react';
 import StatusBadge from '../components/common/StatusBadge.jsx';
 import DataSourceBadge from '../components/common/DataSourceBadge.jsx';
 import { STATIONS } from '../data/stationConfig.js';
+import telemetryEngine from '../simulation/telemetryEngine.js';
 
 const DEFAULTS = {
-  temperature: -16,
+  temperature: -16.4,
   supplyDelay: 0,
   chpFailure: 'None',
   windSeverity: 'Normal',
   satelliteConn: 'Normal',
   waterPumpStatus: 'Normal',
+  fuelReserve: 61,
 };
 
 export function ScenarioSimulatorPage() {
   const { stationId = 'bharati' } = useParams();
+  const navigate = useNavigate();
   const currentStationCode = stationId.toLowerCase() === 'maitri' ? 'MTR' : 'BHT';
   const station = STATIONS[currentStationCode] || STATIONS.BHT;
   const isBharati = currentStationCode === 'BHT';
 
-  // Form Controls State
-  const [temperature, setTemperature] = useState(-42);
-  const [supplyDelay, setSupplyDelay] = useState(12);
-  const [chpFailure, setChpFailure] = useState(isBharati ? 'CHP-2' : 'DG-2');
-  const [windSeverity, setWindSeverity] = useState('High'); // Normal / High / Extreme
-  const [satelliteConn, setSatelliteConn] = useState('Degraded'); // Normal / Degraded / Offline
-  const [waterPumpStatus, setWaterPumpStatus] = useState('Normal'); // Normal / Failed
+  const initStress = telemetryEngine.scenarioStress || {};
+
+  // Form Controls State initialized from live telemetry engine
+  const [temperature, setTemperature] = useState(initStress.temperature || -16.4);
+  const [supplyDelay, setSupplyDelay] = useState(initStress.supplyDelayDays || 0);
+  const [chpFailure, setChpFailure] = useState(initStress.chpFailure || 'None');
+  const [windSeverity, setWindSeverity] = useState(initStress.windSeverity || 'Normal');
+  const [satelliteConn, setSatelliteConn] = useState(initStress.satelliteConn || 'Normal');
+  const [waterPumpStatus, setWaterPumpStatus] = useState(initStress.waterPumpStatus || 'Normal');
+  const [fuelReserve, setFuelReserve] = useState(initStress.fuelReservePercent || 61);
+
+  // Sync to live telemetry engine whenever any stress parameter changes
+  useEffect(() => {
+    telemetryEngine.applyScenarioStress({
+      temperature,
+      supplyDelayDays: supplyDelay,
+      chpFailure,
+      windSeverity,
+      satelliteConn,
+      waterPumpStatus,
+      fuelReservePercent: fuelReserve,
+    });
+  }, [temperature, supplyDelay, chpFailure, windSeverity, satelliteConn, waterPumpStatus, fuelReserve]);
 
   // Simulation results — recalculated live whenever an input changes
   const results = useMemo(() => {
     const tempDrop = Math.max(0, -16.4 - temperature);
     const heatingDeltaNum = Math.round(
-      tempDrop * 1.2 + (windSeverity === 'Extreme' ? 12 : windSeverity === 'High' ? 6 : 0)
+      tempDrop * 1.5 + (windSeverity === 'Extreme' ? 12 : windSeverity === 'High' ? 6 : 0)
     );
     const fuelDeltaNum = Math.round(heatingDeltaNum * 0.7 + (chpFailure !== 'None' ? 6 : 0));
 
     const basePower = isBharati ? 360 : 300;
     const lostPower = chpFailure !== 'None' ? (isBharati ? 120 : 100) : 0;
-    const remainingPower = basePower - lostPower;
+    const remainingPower = fuelReserve <= 10 ? 0 : basePower - lostPower;
 
     const baseRunway = isBharati ? 46 : 48;
-    const computedRunway = Math.max(14, Math.round(baseRunway * (1 - fuelDeltaNum / 100)));
+    const computedRunway = Math.max(0, Math.round(baseRunway * (fuelReserve / 61) * (1 - fuelDeltaNum / 100)));
     const resupplyHorizon = station.resupply.daysUntilNext + Number(supplyDelay);
     const deficit = Math.max(0, resupplyHorizon - computedRunway);
 
     let risk = 'NORMAL';
-    if ((deficit > 8 || chpFailure !== 'None') && temperature <= -35) {
+    if ((deficit > 8 || chpFailure !== 'None' || fuelReserve <= 20) && temperature <= -35) {
       risk = 'CRITICAL';
-    } else if (deficit > 0 || temperature <= -30) {
+    } else if (deficit > 0 || temperature <= -30 || fuelReserve <= 35 || waterPumpStatus === 'Failed') {
       risk = 'WARNING';
     }
 
@@ -60,6 +79,9 @@ export function ScenarioSimulatorPage() {
 
     if (chpFailure !== 'None') {
       dynamicActions.push(`Initiate inspection and emergency bypass on ${chpFailure} alternator cooling circuit.`);
+    }
+    if (fuelReserve <= 25) {
+      dynamicActions.push(`Critical low fuel alert (${fuelReserve}%) — enforce non-essential consumer blackout protocol.`);
     }
     if (deficit > 0) {
       dynamicActions.push(`Prepare emergency fuel allocation (${deficit} day deficit) and notify NCPOR Polar Logistics desk.`);
@@ -81,7 +103,7 @@ export function ScenarioSimulatorPage() {
       overallRisk: risk,
       actions: dynamicActions,
     };
-  }, [temperature, supplyDelay, chpFailure, windSeverity, satelliteConn, waterPumpStatus, isBharati, station]);
+  }, [temperature, supplyDelay, chpFailure, windSeverity, satelliteConn, waterPumpStatus, fuelReserve, isBharati, station]);
 
   const handleReset = () => {
     setTemperature(DEFAULTS.temperature);
@@ -90,9 +112,17 @@ export function ScenarioSimulatorPage() {
     setWindSeverity(DEFAULTS.windSeverity);
     setSatelliteConn(DEFAULTS.satelliteConn);
     setWaterPumpStatus(DEFAULTS.waterPumpStatus);
+    setFuelReserve(DEFAULTS.fuelReserve);
+    telemetryEngine.resetScenarioStress();
   };
 
   const isDeficit = results.resourceDeficit !== '0 days (Nominal)';
+  const hasActiveStress =
+    temperature !== -16.4 ||
+    chpFailure !== 'None' ||
+    fuelReserve !== 61 ||
+    waterPumpStatus !== 'Normal' ||
+    satelliteConn !== 'Normal';
 
   return (
     <div className="max-w-6xl mx-auto px-3 sm:px-4 pb-10 space-y-4">
@@ -101,36 +131,55 @@ export function ScenarioSimulatorPage() {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-bold text-slate-900">Scenario Simulator</h1>
-            <DataSourceBadge type="SIMULATED" />
+            <DataSourceBadge type="LIVE · 7s SYNC" />
           </div>
           <p className="text-xs text-slate-500 mt-0.5">
-            Model climate, mechanical, and logistics stress on {station.name} station survivability
+            Model climate, mechanical, and logistics stress on {station.name} station survivability with real-time digital twin coupling
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={handleReset}
-          className="self-start sm:self-auto px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-medium text-slate-600 hover:bg-slate-50 flex items-center gap-1.5 shrink-0"
-        >
-          <RotateCcw className="w-3.5 h-3.5" />
-          Reset
-        </button>
+        <div className="flex items-center gap-2">
+          {hasActiveStress && (
+            <button
+              type="button"
+              onClick={() => navigate(`/station/${stationId}/dependencies`)}
+              className="px-3 py-1.5 rounded-lg bg-sky-50 border border-sky-200 text-xs font-semibold text-sky-800 hover:bg-sky-100 flex items-center gap-1.5 shrink-0 transition-colors cursor-pointer"
+            >
+              <GitFork className="w-3.5 h-3.5" />
+              <span>Trace Dependencies</span>
+              <ArrowRight className="w-3 h-3" />
+            </button>
+          )}
+
+          <button
+            type="button"
+            onClick={handleReset}
+            className="px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-medium text-slate-600 hover:bg-slate-50 flex items-center gap-1.5 shrink-0 transition-colors cursor-pointer"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+            Reset
+          </button>
+        </div>
       </div>
 
       {/* Split panel: inputs (left) / live results (right) */}
       <div className="grid grid-cols-1 lg:grid-cols-[360px_1fr] gap-4 items-start">
         {/* ---------------- INPUT PANEL ---------------- */}
         <div className="lg:sticky lg:top-4 bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-5">
-          <h2 className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide">
-            Stress parameters
-          </h2>
+          <div className="flex items-center justify-between">
+            <h2 className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide">
+              Stress parameters
+            </h2>
+            <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+              Coupled to Twin
+            </span>
+          </div>
 
           {/* Outside Temperature */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
               <label className="text-xs font-medium text-slate-700">Outside temperature</label>
-              <span className="text-xs font-semibold text-sky-800 tabular-nums transition-colors duration-300">
+              <span className={`text-xs font-semibold tabular-nums transition-colors duration-300 ${temperature <= -35 ? 'text-rose-600 font-bold' : 'text-sky-800'}`}>
                 {temperature}°C
               </span>
             </div>
@@ -144,8 +193,35 @@ export function ScenarioSimulatorPage() {
               className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-sky-700"
             />
             <div className="flex justify-between text-[10px] text-slate-400">
-              <span>−60°C</span>
-              <span>−5°C</span>
+              <span>−60°C (Extreme)</span>
+              <span>−5°C (Warm)</span>
+            </div>
+          </div>
+
+          {/* Fuel Level Slider */}
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-medium text-slate-700">Fuel storage reserve</label>
+              <span
+                className={`text-xs font-semibold tabular-nums ${
+                  fuelReserve <= 25 ? 'text-rose-600 font-bold' : fuelReserve <= 40 ? 'text-amber-600' : 'text-sky-800'
+                }`}
+              >
+                {fuelReserve}%
+              </span>
+            </div>
+            <input
+              type="range"
+              min="5"
+              max="100"
+              step="1"
+              value={fuelReserve}
+              onChange={(e) => setFuelReserve(Number(e.target.value))}
+              className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-sky-700"
+            />
+            <div className="flex justify-between text-[10px] text-slate-400">
+              <span>5% (Depleted)</span>
+              <span>100% (Full)</span>
             </div>
           </div>
 
@@ -185,13 +261,13 @@ export function ScenarioSimulatorPage() {
               <option value="None">None — all units operational</option>
               {isBharati ? (
                 <>
-                  <option value="CHP-1">CHP-1 trip</option>
-                  <option value="CHP-2">CHP-2 trip</option>
+                  <option value="CHP-1">CHP-1 trip (overheat)</option>
+                  <option value="CHP-2">CHP-2 trip (alternator fault)</option>
                   <option value="CHP-3">CHP-3 trip (heat exchanger fault)</option>
                 </>
               ) : (
                 <>
-                  <option value="DG-1">DG-1 outage</option>
+                  <option value="DG-1">DG-1 outage (overheat)</option>
                   <option value="DG-2">DG-2 outage</option>
                   <option value="DG-3">DG-3 standby failure</option>
                 </>
@@ -257,7 +333,7 @@ export function ScenarioSimulatorPage() {
           </div>
 
           <p className="text-[10px] text-slate-400 pt-1">
-            Results update automatically as parameters change.
+            Parameters propagate immediately to Dashboard, Bento Grid, and Dependency Map in real time.
           </p>
         </div>
 

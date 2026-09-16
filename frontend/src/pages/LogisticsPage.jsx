@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { Boxes, Ship, Calendar, AlertCircle } from 'lucide-react';
 import StatusBadge from '../components/common/StatusBadge.jsx';
@@ -12,7 +12,16 @@ export function LogisticsPage() {
   const station = STATIONS[currentStationCode] || STATIONS.BHT;
   const inventory = LOGISTICS_INVENTORY[currentStationCode] || LOGISTICS_INVENTORY.BHT;
 
-  const telemetry = telemetryEngine.calculateTelemetry(currentStationCode);
+  const [telemetryState, setTelemetryState] = useState(() => telemetryEngine.getState());
+
+  useEffect(() => {
+    const unsub = telemetryEngine.subscribe((state) => {
+      setTelemetryState(state);
+    });
+    return () => unsub();
+  }, []);
+
+  const telemetry = telemetryState[currentStationCode] || telemetryState.BHT || {};
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">

@@ -1,9 +1,10 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useOutletContext, useParams } from 'react-router-dom';
 import EnvironmentHero from '../components/dashboard/EnvironmentHero.jsx';
 import SystemCard from '../components/dashboard/SystemCard.jsx';
 import StatusBadge from '../components/common/StatusBadge.jsx';
 import { STATIONS } from '../data/stationConfig.js';
+import telemetryEngine from '../simulation/telemetryEngine.js';
 import {
   ArrowRight,
   AlertTriangle,
@@ -22,13 +23,25 @@ import {
   SlidersHorizontal,
 } from 'lucide-react';
 
-export function StationDashboard() {
+export function StationDashboard({ telemetry: propTelemetry }) {
   const { stationId = 'bharati' } = useParams();
   const navigate = useNavigate();
   const context = useOutletContext() || {};
   const currentStationCode = stationId.toLowerCase() === 'maitri' ? 'MTR' : 'BHT';
   const station = STATIONS[currentStationCode] || STATIONS.BHT;
-  const telemetry = context.telemetry || {};
+
+  // Direct subscription to telemetryEngine for guaranteed 7-second real-time updates
+  const [telemetryState, setTelemetryState] = useState(() => telemetryEngine.getState());
+
+  useEffect(() => {
+    const unsub = telemetryEngine.subscribe((state) => {
+      setTelemetryState(state);
+    });
+    return () => unsub();
+  }, []);
+
+  const liveTel = telemetryState[currentStationCode] || telemetryState.BHT || {};
+  const telemetry = propTelemetry || context.telemetry || liveTel;
 
   // UI state for Bento grid filtering and view modes
   const [activeCategory, setActiveCategory] = useState('all');
@@ -80,7 +93,13 @@ export function StationDashboard() {
   };
 
   const getDynamicStatus = (sys) => {
-    if ((sys.id === 'chp-3' || sys.id === 'dg-3') && telemetry.power?.chp3) {
+    if ((sys.id === 'chp-1' || sys.id === 'dg-1') && telemetry.power?.chp1?.status) {
+      return telemetry.power.chp1.status;
+    }
+    if ((sys.id === 'chp-2' || sys.id === 'dg-2') && telemetry.power?.chp2?.status) {
+      return telemetry.power.chp2.status;
+    }
+    if ((sys.id === 'chp-3' || sys.id === 'dg-3') && telemetry.power?.chp3?.status) {
       return telemetry.power.chp3.status;
     }
     if ((sys.id === 'sea-water-pump' || sys.id === 'lake-water-pump') && telemetry.water) {
@@ -89,19 +108,42 @@ export function StationDashboard() {
     if (sys.id === 'satellite-communication' && telemetry.satellite?.isLost) {
       return 'Critical';
     }
-    if ((sys.id === 'fuel-farm' || sys.id === 'fuel-storage') && telemetry.fuel?.reservePercent < 35) {
-      return 'Warning';
+    if ((sys.id === 'fuel-farm' || sys.id === 'fuel-storage') && telemetry.fuel) {
+      if (telemetry.fuel.reservePercent <= 10) return 'Critical';
+      if (telemetry.fuel.reservePercent <= 35) return 'Warning';
     }
     return sys.status;
   };
 
-  // Pre-calculate system statuses and counts
+  // Pre-calculate system statuses, dynamic specs and counts
   const systemsWithStatus = useMemo(() => {
-    return systems.map((sys) => ({
-      ...sys,
-      dynamicStatus: getDynamicStatus(sys),
-      dynamicMetric: getDynamicMetric(sys),
-    }));
+    return systems.map((sys) => {
+      const dynamicStatus = getDynamicStatus(sys);
+      const dynamicMetric = getDynamicMetric(sys);
+      const updatedSpecs = { ...(sys.specs || {}) };
+
+      if ((sys.id === 'chp-1' || sys.id === 'dg-1') && telemetry.power?.chp1) {
+        updatedSpecs.load = telemetry.power.chp1.load;
+        if (telemetry.power.chp1.temp) updatedSpecs.temperature = telemetry.power.chp1.temp;
+      } else if ((sys.id === 'chp-2' || sys.id === 'dg-2') && telemetry.power?.chp2) {
+        updatedSpecs.load = telemetry.power.chp2.load;
+        if (telemetry.power.chp2.temp) updatedSpecs.temperature = telemetry.power.chp2.temp;
+      } else if ((sys.id === 'chp-3' || sys.id === 'dg-3') && telemetry.power?.chp3) {
+        updatedSpecs.load = telemetry.power.chp3.load;
+        if (telemetry.power.chp3.temp) updatedSpecs.temperature = telemetry.power.chp3.temp;
+      } else if ((sys.id === 'fuel-farm' || sys.id === 'fuel-storage') && telemetry.fuel) {
+        if (telemetry.fuel.currentLiters) {
+          updatedSpecs.currentVolume = `${telemetry.fuel.currentLiters.toLocaleString()} L`;
+        }
+      }
+
+      return {
+        ...sys,
+        specs: updatedSpecs,
+        dynamicStatus,
+        dynamicMetric,
+      };
+    });
   }, [systems, telemetry]);
 
   const alertCount = useMemo(() => {

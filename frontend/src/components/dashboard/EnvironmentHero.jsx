@@ -19,23 +19,32 @@ export function EnvironmentHero({
   isStale = false,
 }) {
   // =========================================================
-  // TEMPERATURE TREND DATA
+  // ROLLING TEMPERATURE TREND DATA
   // =========================================================
 
-  const trendData = [
-    { v: temperature - 1.2 },
-    { v: temperature - 0.8 },
-    { v: temperature - 1.5 },
-    { v: temperature - 1.1 },
-    { v: temperature - 0.5 },
-    { v: temperature - 0.2 },
-    { v: temperature - 0.4 },
-    { v: temperature + 0.1 },
-    { v: temperature - 0.1 },
-    { v: temperature + 0.3 },
-    { v: temperature + 0.1 },
-    { v: temperature },
-  ];
+  const [history, setHistory] = React.useState(() => [
+    { v: +(Number(temperature) - 1.2).toFixed(1) },
+    { v: +(Number(temperature) - 0.8).toFixed(1) },
+    { v: +(Number(temperature) - 1.5).toFixed(1) },
+    { v: +(Number(temperature) - 1.1).toFixed(1) },
+    { v: +(Number(temperature) - 0.5).toFixed(1) },
+    { v: +(Number(temperature) - 0.2).toFixed(1) },
+    { v: +(Number(temperature) - 0.4).toFixed(1) },
+    { v: +(Number(temperature) + 0.1).toFixed(1) },
+    { v: +Number(temperature).toFixed(1) },
+  ]);
+
+  React.useEffect(() => {
+    setHistory((prev) => {
+      const currentVal = +Number(temperature).toFixed(1);
+      if (prev.length > 0 && prev[prev.length - 1].v === currentVal) {
+        return prev;
+      }
+      return [...prev.slice(-11), { v: currentVal }];
+    });
+  }, [temperature]);
+
+  const trendData = history;
 
   return (
     <div className="w-full bg-transparent rounded-2xl border-0 shadow-none overflow-hidden">

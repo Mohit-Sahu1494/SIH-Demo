@@ -1,5 +1,5 @@
 import React from 'react';
-import { Clock } from 'lucide-react';
+import { Clock, Menu } from 'lucide-react';
 import StationSwitcher from './StationSwitcher.jsx';
 
 export function MissionControlHeader({
@@ -8,16 +8,27 @@ export function MissionControlHeader({
   currentTel,
   antarcticTime,
   onStationSwitch,
+  onToggleMobileMenu,
 }) {
   const isSatelliteLost = currentTel?.satellite?.isLost;
 
   return (
     <header className="sticky top-0 z-40 w-full">
-      <div className="px-4 sm:px-6 py-3">
-        <div className="flex items-center justify-between gap-4 rounded-2xl border border-white/40 bg-white/25 px-4 sm:px-5 py-2.5 shadow-sm backdrop-blur-xl">
+      <div className="px-3 sm:px-6 py-2.5 sm:py-3">
+        <div className="flex items-center justify-between gap-3 sm:gap-4 rounded-2xl border border-white/40 bg-white/30 px-3 sm:px-5 py-2 sm:py-2.5 shadow-sm backdrop-blur-xl">
 
-          {/* LEFT — Station */}
-          <div className="flex items-center gap-3 min-w-0">
+          {/* LEFT — Mobile Menu & Station */}
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            {onToggleMobileMenu && (
+              <button
+                type="button"
+                onClick={onToggleMobileMenu}
+                aria-label="Open Navigation"
+                className="md:hidden p-1.5 rounded-lg bg-white/60 border border-slate-200/60 text-slate-700 hover:bg-white transition-colors shrink-0 shadow-xs cursor-pointer"
+              >
+                <Menu className="w-4 h-4" />
+              </button>
+            )}
             <StationSwitcher
               currentStationCode={currentStationCode}
               onSelectStation={onStationSwitch}

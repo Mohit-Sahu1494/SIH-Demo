@@ -29,6 +29,31 @@ class Simulator {
       EXTREME_WEATHER: extremeWeatherScenario,
       LOW_INVENTORY: lowInventoryScenario,
     };
+
+    this.stressOverrides = {};
+  }
+
+  setStressOverrides(overrides = {}) {
+    this.stressOverrides = { ...this.stressOverrides, ...overrides };
+
+    if (overrides.temperature !== undefined && Number(overrides.temperature) <= -35) {
+      this.currentScenarioName = 'EXTREME_WEATHER';
+    } else if (overrides.chpFailure && overrides.chpFailure !== 'None') {
+      this.currentScenarioName = 'GENERATOR_FAILURE';
+    } else if (overrides.fuelLevel !== undefined && Number(overrides.fuelLevel) <= 25) {
+      this.currentScenarioName = 'LOW_FUEL';
+    }
+
+    console.log(`\x1b[35m[Simulator] Stress parameters applied:\x1b[0m`, this.stressOverrides);
+    return this.getCurrentScenario();
+  }
+
+  resetStressOverrides() {
+    this.stressOverrides = {};
+    this.currentScenarioName = 'NORMAL';
+    this.scenarioProgress = 0.0;
+    console.log(`\x1b[35m[Simulator] Stress parameters reset to baseline.\x1b[0m`);
+    return this.getCurrentScenario();
   }
 
   initMqtt() {

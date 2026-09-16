@@ -28,44 +28,62 @@ import {
 import useStationStore from '../store/stationStore.js';
 import useDashboardStore from '../store/dashboardStore.js';
 import Badge from '../components/common/Badge.jsx';
+import telemetryEngine from '../simulation/telemetryEngine.js';
 
 export function Energy() {
   const { currentStationCode, stations } = useStationStore();
   const { energy, assetsTelemetry } = useDashboardStore();
   const [range, setRange] = useState('24h');
 
+  // Real-time telemetry subscription
+  const [telemetryState, setTelemetryState] = useState(() => telemetryEngine.getState());
+
+  useEffect(() => {
+    const unsub = telemetryEngine.subscribe((state) => {
+      setTelemetryState(state);
+    });
+    return () => unsub();
+  }, []);
+
   const currentStation =
     stations.find((s) => s.code === currentStationCode) || stations[0];
 
+  const stationTel = telemetryState[currentStationCode] || telemetryState.BHT || {};
+
   // Dynamic calculations per requirement
-  const gen = energy.generation || 168;
-  const cons = energy.consumption || 144;
-  const bat = energy.batteryLevel || 88;
-  const fuel = energy.fuelLevel || 76.5;
+  const gen = stationTel.power?.availableKva ? Math.round(stationTel.power.availableKva * 0.72) : (energy.generation || 168);
+  const cons = stationTel.power?.totalDemandKw || energy.consumption || 144;
+  const bat = stationTel.battery?.levelPercent !== undefined ? stationTel.battery.levelPercent : (energy.batteryLevel || 88);
+  const fuel = stationTel.fuel?.reservePercent !== undefined ? stationTel.fuel.reservePercent : (energy.fuelLevel || 76.5);
 
   const balanceDelta = +(gen - cons).toFixed(1);
-  const balancePercent = Math.round((balanceDelta / cons) * 100);
-  const fuelDaysAutonomy = Math.round((fuel / 100) * 60); // 60 days full tank baseline
+  const balancePercent = Math.round((balanceDelta / (cons || 1)) * 100);
+  const fuelDaysAutonomy = stationTel.fuel?.runwayDays || Math.round((fuel / 100) * 60);
 
-  // Generator 1 & 2 individual loads from asset telemetry
-  const gen1Load = assetsTelemetry['GEN-01']?.load || 74.0;
-  const gen2Load = assetsTelemetry['GEN-02']?.load || 74.5;
-  const gen2Status = assetsTelemetry['GEN-02']?.status || 'HEALTHY';
+  // Generator individual loads from live telemetry
+  const gen1Load = stationTel.power?.chp1?.load ? parseFloat(stationTel.power.chp1.load) : (assetsTelemetry['GEN-01']?.load || 74.0);
+  const gen2Load = stationTel.power?.chp2?.load ? parseFloat(stationTel.power.chp2.load) : (assetsTelemetry['GEN-02']?.load || 74.5);
+  const gen2Status = stationTel.power?.chp2?.status === 'Critical' ? 'CRITICAL' : (assetsTelemetry['GEN-02']?.status || 'HEALTHY');
 
-  const chartData = [
-    { time: '00:00', generation: 165, consumption: 140, battery: 90 },
-    { time: '04:00', generation: 162, consumption: 138, battery: 89 },
+  // Rolling live history for energy chart
+  const [chartHistory, setChartHistory] = useState(() => [
     { time: '08:00', generation: 172, consumption: 148, battery: 88 },
-    { time: '12:00', generation: 178, consumption: 154, battery: 87 },
-    { time: '16:00', generation: 174, consumption: 150, battery: 88 },
-    { time: '20:00', generation: 168, consumption: 145, battery: 88 },
-    {
-      time: 'Live',
-      generation: gen,
-      consumption: cons,
-      battery: bat,
-    },
-  ];
+    { time: '10:00', generation: 178, consumption: 154, battery: 87 },
+    { time: '12:00', generation: 174, consumption: 150, battery: 88 },
+    { time: '14:00', generation: 168, consumption: 145, battery: 88 },
+    { time: 'Live', generation: 168, consumption: 144, battery: 88 },
+  ]);
+
+  useEffect(() => {
+    const now = new Date();
+    const timeLabel = now.toTimeString().slice(0, 5) + ':' + String(now.getSeconds()).padStart(2, '0');
+    setChartHistory((prev) => [
+      ...prev.slice(-6),
+      { time: timeLabel, generation: Math.round(gen), consumption: Math.round(cons), battery: bat }
+    ]);
+  }, [gen, cons, bat]);
+
+  const chartData = chartHistory;
 
   return (
     <div className="space-y-6 select-none">

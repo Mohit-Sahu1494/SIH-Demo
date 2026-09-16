@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { AlertTriangle, ShieldCheck, Ship, Gauge } from 'lucide-react';
 import DataSourceBadge from '../components/common/DataSourceBadge.jsx';
@@ -11,19 +11,35 @@ export function ResourceForecastPage() {
   const station = STATIONS[currentStationCode] || STATIONS.BHT;
   const isBharati = currentStationCode === 'BHT';
 
-  const telemetry = telemetryEngine.calculateTelemetry(currentStationCode);
-  const nextResupplyDays = telemetry.fuel.nextResupplyDays;
+  const [telemetryState, setTelemetryState] = useState(() => telemetryEngine.getState());
+
+  useEffect(() => {
+    const unsub = telemetryEngine.subscribe((state) => {
+      setTelemetryState(state);
+    });
+    return () => unsub();
+  }, []);
+
+  const telemetry = telemetryState[currentStationCode] || telemetryState.BHT || {};
+  const fuel = telemetry.fuel || {
+    nextResupplyDays: 45,
+    runwayDays: 35,
+    reservePercent: 61,
+    currentLiters: 146400,
+    dailyBurnLiters: 4150,
+  };
+  const nextResupplyDays = fuel.nextResupplyDays;
 
   // Resources monitored for runway
   const resources = [
     {
       name: 'Polar Diesel Fuel (CHP & Boilers)',
       key: 'fuel',
-      remainingDays: telemetry.fuel.runwayDays,
+      remainingDays: fuel.runwayDays,
       unit: 'Days of Continuous Operation',
-      stock: `${telemetry.fuel.reservePercent}%`,
-      capacity: `${telemetry.fuel.currentLiters.toLocaleString()} L`,
-      burnRate: `${telemetry.fuel.dailyBurnLiters.toLocaleString()} L/day`,
+      stock: `${fuel.reservePercent}%`,
+      capacity: `${(fuel.currentLiters || 146400).toLocaleString()} L`,
+      burnRate: `${(fuel.dailyBurnLiters || 4150).toLocaleString()} L/day`,
     },
     {
       name: 'Food Provisions & Cold Rations',

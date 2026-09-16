@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Scale, ArrowRight, Activity, Radio, Map } from 'lucide-react';
 import StatusBadge from '../components/common/StatusBadge.jsx';
@@ -8,7 +8,15 @@ import { STATIONS } from '../data/stationConfig.js';
 // --- MAIN COMPONENT ---
 export function StationComparisonPage() {
   const navigate = useNavigate();
-  const telemetry = telemetryEngine.getState();
+  const [telemetry, setTelemetry] = useState(() => telemetryEngine.getState());
+
+  useEffect(() => {
+    const unsub = telemetryEngine.subscribe((state) => {
+      setTelemetry(state);
+    });
+    return () => unsub();
+  }, []);
+
   const bhtTel = telemetry.BHT || {};
   const mtrTel = telemetry.MTR || {};
 
