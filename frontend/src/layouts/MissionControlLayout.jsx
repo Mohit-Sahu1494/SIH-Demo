@@ -63,27 +63,26 @@ export function MissionControlLayout() {
     return () => unsubscribe();
   }, []);
 
-  // Update Antarctic station local time (UTC+5 for Larsemann / UTC+0 for Maitri)
+  // Update live current local time
   useEffect(() => {
     const updateTime = () => {
       const now = new Date();
-      const offsetHours = currentStationCode === 'BHT' ? 5 : 0;
-      const utc = now.getTime() + now.getTimezoneOffset() * 60000;
-      const stationDate = new Date(utc + 3600000 * offsetHours);
-
-      const timeStr = stationDate.toTimeString().split(' ')[0];
-      const dateStr = stationDate.toLocaleDateString('en-GB', {
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      const seconds = String(now.getSeconds()).padStart(2, '0');
+      const timeStr = `${hours}:${minutes}:${seconds}`;
+      const dateStr = now.toLocaleDateString('en-GB', {
         day: '2-digit',
         month: 'short',
         year: 'numeric',
       });
-      setAntarcticTime(`${timeStr} (UTC${offsetHours >= 0 ? `+${offsetHours}` : offsetHours}) · ${dateStr}`);
+      setAntarcticTime(`${timeStr} · ${dateStr}`);
     };
 
     updateTime();
     const timer = setInterval(updateTime, 1000);
     return () => clearInterval(timer);
-  }, [currentStationCode]);
+  }, []);
 
   const toggleSection = (sec) => {
     setCollapsedSections((prev) => ({ ...prev, [sec]: !prev[sec] }));

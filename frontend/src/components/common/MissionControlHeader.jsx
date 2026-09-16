@@ -36,33 +36,21 @@ export function MissionControlHeader({
             />
           </div>
 
-          {/* RIGHT — Telemetry */}
+          {/* RIGHT — Telemetry & Clock */}
           <div className="flex items-center gap-3 sm:gap-5 text-xs">
-            {/* Station Time */}
-            <div className="hidden lg:flex flex-col text-right">
-              <span className="text-slate-700/60 text-[10px] uppercase font-semibold tracking-wide">
-                Station Time
+            {/* Current Time */}
+            <div className="flex flex-col text-right">
+              <span className="text-slate-700/60 text-[9px] sm:text-[10px] uppercase font-semibold tracking-wide">
+                Current Time
               </span>
 
-              <span className="font-mono text-slate-800 font-semibold flex items-center gap-1.5 justify-end">
-                <Clock className="w-3 h-3 text-slate-600/70" />
+              <span className="font-mono text-slate-800 text-[11px] sm:text-xs font-semibold flex items-center gap-1.5 justify-end">
+                <Clock className="w-3 h-3 text-slate-600/70 shrink-0" />
                 {antarcticTime}
               </span>
             </div>
-
-            {/* Satellite Link */}
-            <div
-              className={`flex items-center gap-2 px-3 py-2 rounded-xl border backdrop-blur-md ${
-                isSatelliteLost
-                  ? 'bg-rose-50/45 border-rose-300/50'
-                  : 'bg-white/30 border-white/50'
-              }`}
-            >
-            
-             
-            </div>
-
           </div>
+
         </div>
       </div>
     </header>

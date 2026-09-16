@@ -337,8 +337,8 @@ export function DependencyMapPage() {
   }, [stress]);
 
   return (
-    <div className="min-h-screen bg-slate-100 p-6 font-sans text-slate-800">
-      <div className="max-w-6xl mx-auto space-y-6">
+    <div className="min-h-screen bg-slate-100 p-3 sm:p-6 font-sans text-slate-800">
+      <div className="max-w-6xl mx-auto space-y-4 sm:space-y-6">
         
         {/* 1. FLAT TECHNICAL HEADER */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 border-b border-slate-300 pb-4">
@@ -346,15 +346,15 @@ export function DependencyMapPage() {
             <div className="flex items-center gap-2 mb-1.5 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
               <span className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-pulse" /> CASCADE ANALYSIS · REAL-TIME TWIN
             </div>
-            <h1 className="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
-              <GitFork className="w-5 h-5 text-slate-700" /> Infrastructure Dependency Map
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
+              <GitFork className="w-5 h-5 text-slate-700 shrink-0" /> Infrastructure Dependency Map
             </h1>
-            <p className="text-sm text-slate-600 font-medium mt-1 border-l-2 border-slate-300 pl-2">
+            <p className="text-xs sm:text-sm text-slate-600 font-medium mt-1 border-l-2 border-slate-300 pl-2">
               Select any system node to trace downstream failure impact across the {station.name} facility.
             </p>
           </div>
           
-          <div className="flex items-center gap-4 text-[10px] font-bold uppercase tracking-wider bg-white border border-slate-300 p-2 rounded-sm shadow-sm">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-[10px] font-bold uppercase tracking-wider bg-white border border-slate-300 p-2 rounded-sm shadow-sm">
             <div className="flex items-center gap-1.5 text-slate-600">
               <div className="w-3 h-3 bg-blue-600 border border-blue-700 rounded-sm"></div> Selected Source
             </div>
@@ -394,27 +394,27 @@ export function DependencyMapPage() {
         )}
 
         {/* 2. SELECTED NODE INSIGHTS (Flat Panel) */}
-        <div className="bg-white border border-slate-300 rounded-sm shadow-sm p-4 flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-4 w-full md:w-auto">
-            <div className="w-12 h-12 bg-slate-100 border border-slate-200 flex items-center justify-center shrink-0">
-              {React.createElement(getNodeIcon(selectedNode), { className: "w-6 h-6 text-slate-700" })}
+        <div className="bg-white border border-slate-300 rounded-sm shadow-sm p-3.5 sm:p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 md:gap-6">
+          <div className="flex items-center gap-3 sm:gap-4 w-full md:w-auto">
+            <div className="w-11 h-11 sm:w-12 sm:h-12 bg-slate-100 border border-slate-200 flex items-center justify-center shrink-0">
+              {React.createElement(getNodeIcon(selectedNode), { className: "w-5 h-5 sm:w-6 sm:h-6 text-slate-700" })}
             </div>
-            <div>
-              <div className="flex items-center gap-2">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
                 <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Simulating Failure For</p>
                 {selectedNode.status && (
                   <StatusBadge status={selectedNode.status} size="sm" />
                 )}
               </div>
-              <h2 className="text-lg font-bold text-slate-900 leading-tight mt-0.5">{selectedNode.name}</h2>
-              <p className="text-xs font-mono text-slate-500">
+              <h2 className="text-base sm:text-lg font-bold text-slate-900 leading-tight mt-0.5 truncate">{selectedNode.name}</h2>
+              <p className="text-xs font-mono text-slate-500 truncate">
                 {selectedNode.id.toUpperCase()} · Tier {selectedNode.tier}
                 {selectedNode.faultNote && <span className="text-rose-600 font-bold ml-2">[{selectedNode.faultNote}]</span>}
               </p>
             </div>
           </div>
 
-          <div className="flex gap-4 w-full md:w-auto md:border-l border-slate-200 md:pl-6">
+          <div className="flex gap-4 w-full md:w-auto md:border-l border-slate-200 md:pl-6 justify-between sm:justify-start">
             <div>
               <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Impact Radius</p>
               <p className="font-mono text-xl font-bold text-slate-800">{affectedCount} <span className="text-xs font-sans text-slate-500">Systems</span></p>
@@ -450,8 +450,8 @@ export function DependencyMapPage() {
         </div>
 
         {/* 3. THE LOGICAL CASCADE MAP */}
-        <div className="bg-white border border-slate-300 rounded-sm shadow-sm p-8 overflow-x-auto">
-          <div className="min-w-[700px] flex flex-col items-center">
+        <div className="bg-white border border-slate-300 rounded-sm shadow-sm p-3 sm:p-8 overflow-x-auto touch-pan-x">
+          <div className="min-w-[580px] sm:min-w-[700px] flex flex-col items-center">
             
             {Array.from({ length: maxTier }, (_, i) => i + 1).map((tier) => {
               const tierNodes = nodesByTier[tier] || [];
@@ -463,12 +463,12 @@ export function DependencyMapPage() {
                   {/* Tier Row Container */}
                   <div className="w-full relative py-2">
                     {/* Background Tier Label */}
-                    <div className="absolute left-0 top-1/2 -translate-y-1/2 flex items-center gap-2 text-slate-300">
-                      <span className="font-mono text-[10px] font-bold uppercase tracking-widest border border-slate-200 px-1 py-0.5">Tier {tier}</span>
-                      <div className="w-8 h-px bg-slate-200"></div>
+                    <div className="absolute left-0 top-1/2 -translate-y-1/2 flex items-center gap-1.5 sm:gap-2 text-slate-300">
+                      <span className="font-mono text-[9px] sm:text-[10px] font-bold uppercase tracking-widest border border-slate-200 px-1 py-0.5 bg-white">Tier {tier}</span>
+                      <div className="w-4 sm:w-8 h-px bg-slate-200"></div>
                     </div>
 
-                    <div className="flex justify-center gap-4 flex-wrap pl-20 pr-4">
+                    <div className="flex justify-center gap-3 sm:gap-4 flex-wrap pl-14 sm:pl-20 pr-2 sm:pr-4">
                       {tierNodes.map((node) => {
                         const isSelected = node.id === selectedNodeId;
                         const isAffected = cascadeAffectedIds.includes(node.id);
@@ -479,7 +479,7 @@ export function DependencyMapPage() {
                           <button
                             key={node.id}
                             onClick={() => setSelectedNodeId(node.id)}
-                            className={`flex items-center gap-3 p-3 w-56 text-left border rounded-sm transition-all duration-150 cursor-pointer ${
+                            className={`flex items-center gap-2.5 sm:gap-3 p-2.5 sm:p-3 w-48 sm:w-56 text-left border rounded-sm transition-all duration-150 cursor-pointer shrink-0 ${
                               isSelected
                                 ? 'bg-blue-600 border-blue-700 text-white shadow-md scale-[1.02]'
                                 : isFaultNode
