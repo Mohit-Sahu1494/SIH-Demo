@@ -6,8 +6,8 @@ import { io } from 'socket.io-client';
 import { STATIONS } from '../data/stationConfig.js';
 import useDashboardStore from '../store/dashboardStore.js';
 
-const BACKEND_SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
-const BACKEND_API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const BACKEND_SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://sih-demo-production.up.railway.app';
+const BACKEND_API_URL = import.meta.env.VITE_API_URL || 'http://sih-demo-production.up.railway.app/api';
 
 class TelemetryEngine {
   constructor() {
