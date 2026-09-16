@@ -119,7 +119,7 @@ export function StationSwitcher({
               text-xl
               font-semibold
               tracking-tight
-              text-slate-900
+              text-white
               whitespace-nowrap
             "
           >
@@ -130,7 +130,7 @@ export function StationSwitcher({
             className={`
               w-4
               h-4
-              text-slate-600
+              text-white/80
               transition-transform
               duration-200
               ${
@@ -169,13 +169,13 @@ export function StationSwitcher({
 
             rounded-2xl
 
-            bg-white/55
+            bg-[#0B2545]
             backdrop-blur-2xl
 
             border
-            border-white/60
+            border-white/20
 
-            shadow-xl
+            shadow-2xl
 
             overflow-hidden
 
@@ -194,16 +194,16 @@ export function StationSwitcher({
               py-3
 
               border-b
-              border-white/40
+              border-white/10
 
-              bg-white/10
+              bg-white/5
             "
           >
             <p
               className="
                 text-[10px]
                 font-semibold
-                text-slate-600/70
+                text-white/70
                 uppercase
                 tracking-[0.12em]
               "
@@ -236,15 +236,17 @@ export function StationSwitcher({
                       ${
                         isSelected
                           ? `
-                            bg-white/45
+                            bg-white/20
                             border
-                            border-white/50
+                            border-white/30
+                            text-white
                           `
                           : `
                             border
                             border-transparent
-                            hover:bg-white/30
-                            hover:border-white/30
+                            text-white/90
+                            hover:bg-white/10
+                            hover:border-white/20
                           `
                       }
                     `}
@@ -266,11 +268,11 @@ export function StationSwitcher({
 
                           rounded-lg
 
-                          bg-white/35
+                          bg-white/15
                           backdrop-blur-md
 
                           border
-                          border-white/40
+                          border-white/20
                         "
                       >
                         <Building2
@@ -279,8 +281,8 @@ export function StationSwitcher({
                             h-4
                             ${
                               isSelected
-                                ? 'text-sky-700'
-                                : 'text-slate-500'
+                                ? 'text-sky-300'
+                                : 'text-white/70'
                             }
                           `}
                         />
@@ -294,8 +296,8 @@ export function StationSwitcher({
                             font-medium
                             ${
                               isSelected
-                                ? 'text-slate-900'
-                                : 'text-slate-800'
+                                ? 'text-white font-semibold'
+                                : 'text-white/90'
                             }
                           `}
                         >
@@ -305,7 +307,7 @@ export function StationSwitcher({
                         <div
                           className="
                             text-xs
-                            text-slate-500
+                            text-white/60
                             truncate
                           "
                         >
@@ -323,7 +325,7 @@ export function StationSwitcher({
                           w-4
                           h-4
                           shrink-0
-                          text-sky-700
+                          text-sky-400
                         "
                       />
                     )}

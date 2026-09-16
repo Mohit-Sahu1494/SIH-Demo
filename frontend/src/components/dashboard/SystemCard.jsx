@@ -175,7 +175,6 @@ export function SystemCard({
 
   // Featured 2-column Bento Card
   if (variant === 'featured') {
-    // Select up to 3 meaningful spec entries
     const specEntries = Object.entries(specs)
       .filter(([k]) => !k.toLowerCase().includes('runtime') && !k.toLowerCase().includes('frequency'))
       .slice(0, 3);

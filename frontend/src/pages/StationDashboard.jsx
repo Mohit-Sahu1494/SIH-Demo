@@ -248,7 +248,7 @@ export function StationDashboard({ telemetry: propTelemetry }) {
         <div className="w-full lg:w-[32%] bg-white/35 backdrop-blur-xl rounded-2xl border border-white/60 p-5 md:p-6 shadow-xs flex flex-col justify-between hover:bg-white/45 transition-all duration-300">
           <div>
             <div className="flex items-center justify-between pb-3 border-b border-white/50">
-              <span className="text-xs font-bold text-slate-600 uppercase tracking-wider">
+              <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">
                 Station Health Index
               </span>
               <StatusBadge status={telemetry.stationStatus || 'Operational'} size="sm" />
@@ -259,7 +259,7 @@ export function StationDashboard({ telemetry: propTelemetry }) {
                 <span className="text-4xl md:text-5xl font-extrabold text-slate-900 font-mono tracking-tight">
                   {telemetry.healthScore || 88}
                 </span>
-                <span className="text-base font-semibold text-slate-400">/ 100</span>
+                <span className="text-base font-semibold text-slate-500">/ 100</span>
               </div>
               <p className="text-xs text-slate-600 mt-2 leading-relaxed">
                 Composite telemetry health score across energy, water, infrastructure, and satellite links.
@@ -269,13 +269,13 @@ export function StationDashboard({ telemetry: propTelemetry }) {
 
           <div className="pt-3.5 border-t border-white/50 space-y-2.5 text-xs">
             <div className="flex justify-between items-center text-slate-700 bg-white/40 border border-white/60 rounded-xl px-3.5 py-2.5 backdrop-blur-xs">
-              <span className="text-slate-500 font-medium">Next Resupply Vessel</span>
+              <span className="text-slate-600 font-medium">Next Resupply Vessel</span>
               <span className="font-bold text-slate-800 font-mono">
                 {station.resupply.daysUntilNext} days
               </span>
             </div>
             <div className="flex justify-between items-center text-slate-700 bg-white/40 border border-white/60 rounded-xl px-3.5 py-2.5 backdrop-blur-xs">
-              <span className="text-slate-500 font-medium">Water Source Mode</span>
+              <span className="text-slate-600 font-medium">Water Source Mode</span>
               <span className="font-bold text-slate-800">
                 {currentStationCode === 'BHT' ? 'Seawater RO' : 'Lake Priyadarshini'}
               </span>
@@ -290,7 +290,7 @@ export function StationDashboard({ telemetry: propTelemetry }) {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-3">
-              <h2 className="text-xl font-bold text-slate-900 tracking-tight">
+              <h2 className="text-xl font-bold text-slate-900 tracking-tight">    
                 Station Systems
               </h2>
               <div className="flex items-center gap-1.5 text-xs font-semibold">

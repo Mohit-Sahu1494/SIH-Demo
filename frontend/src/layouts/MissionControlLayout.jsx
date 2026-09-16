@@ -97,7 +97,7 @@ export function MissionControlLayout() {
 
   // Reusable Navigation Content
   const renderNavLinks = (onItemClick) => (
-    <nav className="flex-1 p-3 space-y-4 text-xs font-medium text-slate-600">
+    <nav className="flex-1 p-3 space-y-4 text-xs font-medium text-white">
       {/* 1. Overview */}
       <div>
         <NavLink
@@ -107,12 +107,12 @@ export function MissionControlLayout() {
           className={({ isActive }) =>
             `flex items-center gap-2.5 px-3 py-2 rounded-md transition-colors ${
               isActive
-                ? 'bg-sky-50 text-sky-900 font-semibold border-l-2 border-sky-800'
-                : 'hover:bg-slate-100 text-slate-700'
+                ? 'bg-white/20 text-white font-semibold border-l-2 border-sky-400'
+                : 'hover:bg-white/10 text-white/85'
             }`
           }
         >
-          <Activity className="w-4 h-4 text-slate-500" />
+          <Activity className="w-4 h-4 text-white/70" />
           <span>Station Overview</span>
         </NavLink>
       </div>
@@ -122,31 +122,31 @@ export function MissionControlLayout() {
         <button
           type="button"
           onClick={() => toggleSection('environment')}
-          className="w-full flex items-center justify-between px-3 py-1.5 text-[11px] uppercase tracking-wider text-slate-400 hover:text-slate-600"
+          className="w-full flex items-center justify-between px-3 py-1.5 text-[11px] uppercase tracking-wider text-white/70 hover:text-white cursor-pointer"
         >
           <span className="flex items-center gap-1.5 font-semibold">
-            <Compass className="w-3.5 h-3.5" />
+            <Compass className="w-3.5 h-3.5 text-white/70" />
             Environment
           </span>
           {collapsedSections.environment ? (
-            <ChevronRight className="w-3.5 h-3.5" />
+            <ChevronRight className="w-3.5 h-3.5 text-white/60" />
           ) : (
-            <ChevronDown className="w-3.5 h-3.5" />
+            <ChevronDown className="w-3.5 h-3.5 text-white/60" />
           )}
         </button>
 
         {!collapsedSections.environment && (
-          <div className="pl-4 space-y-0.5 border-l border-slate-100 ml-3">
+          <div className="pl-4 space-y-0.5 border-l border-white/15 ml-3">
             <NavLink
               to={`/station/${stationId}/environment`}
               onClick={onItemClick}
               className={({ isActive }) =>
                 `flex items-center gap-2 px-2.5 py-1.5 rounded transition-colors ${
-                  isActive ? 'text-sky-900 bg-sky-50/70 font-semibold' : 'hover:bg-slate-50 text-slate-600'
+                  isActive ? 'text-white bg-white/20 font-semibold' : 'hover:bg-white/10 text-white/80'
                 }`
               }
             >
-              <Thermometer className="w-3.5 h-3.5 text-slate-400" />
+              <Thermometer className="w-3.5 h-3.5 text-white/70" />
               <span>Live Conditions & Trends</span>
             </NavLink>
           </div>
@@ -158,69 +158,69 @@ export function MissionControlLayout() {
         <button
           type="button"
           onClick={() => toggleSection('infrastructure')}
-          className="w-full flex items-center justify-between px-3 py-1.5 text-[11px] uppercase tracking-wider text-slate-400 hover:text-slate-600"
+          className="w-full flex items-center justify-between px-3 py-1.5 text-[11px] uppercase tracking-wider text-white/70 hover:text-white cursor-pointer"
         >
           <span className="flex items-center gap-1.5 font-semibold">
-            <Zap className="w-3.5 h-3.5" />
+            <Zap className="w-3.5 h-3.5 text-white/70" />
             Infrastructure
           </span>
           {collapsedSections.infrastructure ? (
-            <ChevronRight className="w-3.5 h-3.5" />
+            <ChevronRight className="w-3.5 h-3.5 text-white/60" />
           ) : (
-            <ChevronDown className="w-3.5 h-3.5" />
+            <ChevronDown className="w-3.5 h-3.5 text-white/60" />
           )}
         </button>
 
         {!collapsedSections.infrastructure && (
-          <div className="pl-4 space-y-0.5 border-l border-slate-100 ml-3">
+          <div className="pl-4 space-y-0.5 border-l border-white/15 ml-3">
             {currentStationCode === 'BHT' ? (
               <>
                 <NavLink
                   to={`/station/${stationId}/systems/chp-1`}
                   onClick={onItemClick}
                   className={({ isActive }) =>
-                    `flex items-center gap-2 px-2.5 py-1.5 rounded ${
-                      isActive ? 'text-sky-900 bg-sky-50/70 font-semibold' : 'hover:bg-slate-50 text-slate-600'
+                    `flex items-center gap-2 px-2.5 py-1.5 rounded transition-colors ${
+                      isActive ? 'text-white bg-white/20 font-semibold' : 'hover:bg-white/10 text-white/80'
                     }`
                   }
                 >
-                  <Zap className="w-3.5 h-3.5 text-slate-400" />
+                  <Zap className="w-3.5 h-3.5 text-white/70" />
                   <span>CHP-1 Unit</span>
                 </NavLink>
                 <NavLink
                   to={`/station/${stationId}/systems/chp-2`}
                   onClick={onItemClick}
                   className={({ isActive }) =>
-                    `flex items-center gap-2 px-2.5 py-1.5 rounded ${
-                      isActive ? 'text-sky-900 bg-sky-50/70 font-semibold' : 'hover:bg-slate-50 text-slate-600'
+                    `flex items-center gap-2 px-2.5 py-1.5 rounded transition-colors ${
+                      isActive ? 'text-white bg-white/20 font-semibold' : 'hover:bg-white/10 text-white/80'
                     }`
                   }
                 >
-                  <Zap className="w-3.5 h-3.5 text-slate-400" />
+                  <Zap className="w-3.5 h-3.5 text-white/70" />
                   <span>CHP-2 Unit</span>
                 </NavLink>
                 <NavLink
                   to={`/station/${stationId}/systems/chp-3`}
                   onClick={onItemClick}
                   className={({ isActive }) =>
-                    `flex items-center gap-2 px-2.5 py-1.5 rounded ${
-                      isActive ? 'text-sky-900 bg-sky-50/70 font-semibold' : 'hover:bg-slate-50 text-slate-600'
+                    `flex items-center gap-2 px-2.5 py-1.5 rounded transition-colors ${
+                      isActive ? 'text-white bg-white/20 font-semibold' : 'hover:bg-white/10 text-white/80'
                     }`
                   }
                 >
-                  <Zap className="w-3.5 h-3.5 text-amber-500" />
+                  <Zap className="w-3.5 h-3.5 text-amber-400" />
                   <span>CHP-3 Unit</span>
                 </NavLink>
                 <NavLink
                   to={`/station/${stationId}/systems/sea-water-pump`}
                   onClick={onItemClick}
                   className={({ isActive }) =>
-                    `flex items-center gap-2 px-2.5 py-1.5 rounded ${
-                      isActive ? 'text-sky-900 bg-sky-50/70 font-semibold' : 'hover:bg-slate-50 text-slate-600'
+                    `flex items-center gap-2 px-2.5 py-1.5 rounded transition-colors ${
+                      isActive ? 'text-white bg-white/20 font-semibold' : 'hover:bg-white/10 text-white/80'
                     }`
                   }
                 >
-                  <Droplets className="w-3.5 h-3.5 text-slate-400" />
+                  <Droplets className="w-3.5 h-3.5 text-white/70" />
                   <span>Sea Water Pump</span>
                 </NavLink>
               </>
@@ -230,24 +230,24 @@ export function MissionControlLayout() {
                   to={`/station/${stationId}/systems/power-system`}
                   onClick={onItemClick}
                   className={({ isActive }) =>
-                    `flex items-center gap-2 px-2.5 py-1.5 rounded ${
-                      isActive ? 'text-sky-900 bg-sky-50/70 font-semibold' : 'hover:bg-slate-50 text-slate-600'
+                    `flex items-center gap-2 px-2.5 py-1.5 rounded transition-colors ${
+                      isActive ? 'text-white bg-white/20 font-semibold' : 'hover:bg-white/10 text-white/80'
                     }`
                   }
                 >
-                  <Zap className="w-3.5 h-3.5 text-slate-400" />
+                  <Zap className="w-3.5 h-3.5 text-white/70" />
                   <span>Power System</span>
                 </NavLink>
                 <NavLink
                   to={`/station/${stationId}/systems/lake-water-pump`}
                   onClick={onItemClick}
                   className={({ isActive }) =>
-                    `flex items-center gap-2 px-2.5 py-1.5 rounded ${
-                      isActive ? 'text-sky-900 bg-sky-50/70 font-semibold' : 'hover:bg-slate-50 text-slate-600'
+                    `flex items-center gap-2 px-2.5 py-1.5 rounded transition-colors ${
+                      isActive ? 'text-white bg-white/20 font-semibold' : 'hover:bg-white/10 text-white/80'
                     }`
                   }
                 >
-                  <Droplets className="w-3.5 h-3.5 text-slate-400" />
+                  <Droplets className="w-3.5 h-3.5 text-white/70" />
                   <span>Lake Water Pump</span>
                 </NavLink>
               </>
@@ -257,12 +257,12 @@ export function MissionControlLayout() {
               to={`/station/${stationId}/systems/fuel-farm`}
               onClick={onItemClick}
               className={({ isActive }) =>
-                `flex items-center gap-2 px-2.5 py-1.5 rounded ${
-                  isActive ? 'text-sky-900 bg-sky-50/70 font-semibold' : 'hover:bg-slate-50 text-slate-600'
+                `flex items-center gap-2 px-2.5 py-1.5 rounded transition-colors ${
+                  isActive ? 'text-white bg-white/20 font-semibold' : 'hover:bg-white/10 text-white/80'
                 }`
               }
             >
-              <Flame className="w-3.5 h-3.5 text-slate-400" />
+              <Flame className="w-3.5 h-3.5 text-white/70" />
               <span>Fuel Reserve</span>
             </NavLink>
 
@@ -270,12 +270,12 @@ export function MissionControlLayout() {
               to={`/station/${stationId}/systems/satellite-communication`}
               onClick={onItemClick}
               className={({ isActive }) =>
-                `flex items-center gap-2 px-2.5 py-1.5 rounded ${
-                  isActive ? 'text-sky-900 bg-sky-50/70 font-semibold' : 'hover:bg-slate-50 text-slate-600'
+                `flex items-center gap-2 px-2.5 py-1.5 rounded transition-colors ${
+                  isActive ? 'text-white bg-white/20 font-semibold' : 'hover:bg-white/10 text-white/80'
                 }`
               }
             >
-              <Radio className="w-3.5 h-3.5 text-slate-400" />
+              <Radio className="w-3.5 h-3.5 text-white/70" />
               <span>Satellite Link</span>
             </NavLink>
           </div>
@@ -287,35 +287,35 @@ export function MissionControlLayout() {
         <button
           type="button"
           onClick={() => toggleSection('operations')}
-          className="w-full flex items-center justify-between px-3 py-1.5 text-[11px] uppercase tracking-wider text-slate-400 hover:text-slate-600"
+          className="w-full flex items-center justify-between px-3 py-1.5 text-[11px] uppercase tracking-wider text-white/70 hover:text-white cursor-pointer"
         >
           <span className="flex items-center gap-1.5 font-semibold">
-            <Wrench className="w-3.5 h-3.5" />
+            <Wrench className="w-3.5 h-3.5 text-white/70" />
             Operations
           </span>
           {collapsedSections.operations ? (
-            <ChevronRight className="w-3.5 h-3.5" />
+            <ChevronRight className="w-3.5 h-3.5 text-white/60" />
           ) : (
-            <ChevronDown className="w-3.5 h-3.5" />
+            <ChevronDown className="w-3.5 h-3.5 text-white/60" />
           )}
         </button>
 
         {!collapsedSections.operations && (
-          <div className="pl-4 space-y-0.5 border-l border-slate-100 ml-3">
+          <div className="pl-4 space-y-0.5 border-l border-white/15 ml-3">
             <NavLink
               to={`/station/${stationId}/alerts`}
               onClick={onItemClick}
               className={({ isActive }) =>
-                `flex items-center justify-between px-2.5 py-1.5 rounded ${
-                  isActive ? 'text-sky-900 bg-sky-50/70 font-semibold' : 'hover:bg-slate-50 text-slate-600'
+                `flex items-center justify-between px-2.5 py-1.5 rounded transition-colors ${
+                  isActive ? 'text-white bg-white/20 font-semibold' : 'hover:bg-white/10 text-white/80'
                 }`
               }
             >
               <span className="flex items-center gap-2">
-                <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
+                <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
                 <span>Alert Center & Why</span>
               </span>
-              <span className="text-[10px] font-bold px-1.5 py-0.2 rounded-full bg-amber-100 text-amber-900">
+              <span className="text-[10px] font-bold px-1.5 py-0.2 rounded-full bg-amber-400 text-slate-900">
                 3
               </span>
             </NavLink>
@@ -324,12 +324,12 @@ export function MissionControlLayout() {
               to={`/station/${stationId}/logistics`}
               onClick={onItemClick}
               className={({ isActive }) =>
-                `flex items-center gap-2 px-2.5 py-1.5 rounded ${
-                  isActive ? 'text-sky-900 bg-sky-50/70 font-semibold' : 'hover:bg-slate-50 text-slate-600'
+                `flex items-center gap-2 px-2.5 py-1.5 rounded transition-colors ${
+                  isActive ? 'text-white bg-white/20 font-semibold' : 'hover:bg-white/10 text-white/80'
                 }`
               }
             >
-              <Boxes className="w-3.5 h-3.5 text-slate-400" />
+              <Boxes className="w-3.5 h-3.5 text-white/70" />
               <span>Logistics Inventory</span>
             </NavLink>
           </div>
@@ -341,31 +341,31 @@ export function MissionControlLayout() {
         <button
           type="button"
           onClick={() => toggleSection('digitalTwin')}
-          className="w-full flex items-center justify-between px-3 py-1.5 text-[11px] uppercase tracking-wider text-slate-400 hover:text-slate-600"
+          className="w-full flex items-center justify-between px-3 py-1.5 text-[11px] uppercase tracking-wider text-white/70 hover:text-white cursor-pointer"
         >
           <span className="flex items-center gap-1.5 font-semibold">
-            <GitFork className="w-3.5 h-3.5" />
+            <GitFork className="w-3.5 h-3.5 text-white/70" />
             Digital Twin
           </span>
           {collapsedSections.digitalTwin ? (
-            <ChevronRight className="w-3.5 h-3.5" />
+            <ChevronRight className="w-3.5 h-3.5 text-white/60" />
           ) : (
-            <ChevronDown className="w-3.5 h-3.5" />
+            <ChevronDown className="w-3.5 h-3.5 text-white/60" />
           )}
         </button>
 
         {!collapsedSections.digitalTwin && (
-          <div className="pl-4 space-y-0.5 border-l border-slate-100 ml-3">
+          <div className="pl-4 space-y-0.5 border-l border-white/15 ml-3">
             <NavLink
               to={`/station/${stationId}/digital-twin`}
               onClick={onItemClick}
               className={({ isActive }) =>
-                `flex items-center gap-2 px-2.5 py-1.5 rounded ${
-                  isActive ? 'text-sky-900 bg-sky-50/70 font-semibold' : 'hover:bg-slate-50 text-slate-600'
+                `flex items-center gap-2 px-2.5 py-1.5 rounded transition-colors ${
+                  isActive ? 'text-white bg-white/20 font-semibold' : 'hover:bg-white/10 text-white/80'
                 }`
               }
             >
-              <GitFork className="w-3.5 h-3.5 text-sky-700" />
+              <GitFork className="w-3.5 h-3.5 text-sky-300" />
               <span>Dependency Map</span>
             </NavLink>
 
@@ -373,12 +373,12 @@ export function MissionControlLayout() {
               to={`/station/${stationId}/simulator`}
               onClick={onItemClick}
               className={({ isActive }) =>
-                `flex items-center gap-2 px-2.5 py-1.5 rounded ${
-                  isActive ? 'text-sky-900 bg-sky-50/70 font-semibold' : 'hover:bg-slate-50 text-slate-600'
+                `flex items-center gap-2 px-2.5 py-1.5 rounded transition-colors ${
+                  isActive ? 'text-white bg-white/20 font-semibold' : 'hover:bg-white/10 text-white/80'
                 }`
               }
             >
-              <Cpu className="w-3.5 h-3.5 text-slate-500" />
+              <Cpu className="w-3.5 h-3.5 text-white/70" />
               <span>Scenario Simulator</span>
             </NavLink>
 
@@ -386,12 +386,12 @@ export function MissionControlLayout() {
               to={`/station/${stationId}/forecast`}
               onClick={onItemClick}
               className={({ isActive }) =>
-                `flex items-center gap-2 px-2.5 py-1.5 rounded ${
-                  isActive ? 'text-sky-900 bg-sky-50/70 font-semibold' : 'hover:bg-slate-50 text-slate-600'
+                `flex items-center gap-2 px-2.5 py-1.5 rounded transition-colors ${
+                  isActive ? 'text-white bg-white/20 font-semibold' : 'hover:bg-white/10 text-white/80'
                 }`
               }
             >
-              <TrendingDown className="w-3.5 h-3.5 text-slate-500" />
+              <TrendingDown className="w-3.5 h-3.5 text-white/70" />
               <span>Resource Forecast</span>
             </NavLink>
           </div>
@@ -399,17 +399,17 @@ export function MissionControlLayout() {
       </div>
 
       {/* 6. Overview Station Comparison */}
-      <div className="pt-2 border-t border-slate-100">
+      <div className="pt-2 border-t border-white/10">
         <NavLink
           to="/operations/compare"
           onClick={onItemClick}
           className={({ isActive }) =>
-            `flex items-center gap-2 px-3 py-2 rounded-md ${
-              isActive ? 'bg-sky-50 text-sky-900 font-semibold' : 'hover:bg-slate-100 text-slate-700'
+            `flex items-center gap-2 px-3 py-2 rounded-md transition-colors ${
+              isActive ? 'bg-white/20 text-white font-semibold' : 'hover:bg-white/10 text-white/85'
             }`
           }
         >
-          <Scale className="w-4 h-4 text-slate-500" />
+          <Scale className="w-4 h-4 text-white/70" />
           <span>Station Comparison</span>
         </NavLink>
       </div>
@@ -441,16 +441,16 @@ export function MissionControlLayout() {
             />
 
             {/* Drawer Content */}
-            <aside className="relative w-72 max-w-[85vw] bg-white h-full shadow-2xl flex flex-col z-10 overflow-y-auto">
-              <div className="p-4 border-b border-slate-100 flex items-center justify-between">
+            <aside className="relative w-72 max-w-[85vw] bg-[#0B2545] text-white border-r border-white/10 h-full shadow-2xl flex flex-col z-10 overflow-y-auto">
+              <div className="p-4 border-b border-white/10 flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-sky-600 animate-pulse" />
-                  <span className="font-bold text-xs text-slate-800 uppercase tracking-wider">Mission Navigation</span>
+                  <span className="w-2 h-2 rounded-full bg-sky-400 animate-pulse" />
+                  <span className="font-bold text-xs text-white uppercase tracking-wider">Mission Navigation</span>
                 </div>
                 <button
                   type="button"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                  className="p-1.5 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -458,14 +458,14 @@ export function MissionControlLayout() {
 
               {renderNavLinks(() => setIsMobileMenuOpen(false))}
 
-              <div className="p-3 border-t border-slate-100 bg-slate-50/50">
-                <div className="text-[11px] text-slate-500 flex items-center justify-between">
+              <div className="p-3 border-t border-white/10 bg-black/20">
+                <div className="text-[11px] text-white/70 flex items-center justify-between">
                   <span>Station Health</span>
-                  <span className="font-semibold text-slate-900">{currentTel?.healthScore || 88} / 100</span>
+                  <span className="font-semibold text-white">{currentTel?.healthScore || 88} / 100</span>
                 </div>
-                <div className="mt-1.5 w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
+                <div className="mt-1.5 w-full bg-white/20 h-1.5 rounded-full overflow-hidden">
                   <div
-                    className="bg-emerald-600 h-full rounded-full transition-all duration-300"
+                    className="bg-emerald-400 h-full rounded-full transition-all duration-300"
                     style={{ width: `${currentTel?.healthScore || 88}%` }}
                   />
                 </div>
@@ -475,18 +475,18 @@ export function MissionControlLayout() {
         )}
 
         {/* Persistent Desktop Left Sidebar (Hidden on mobile) */}
-        <aside className="hidden md:flex md:w-64 bg-white border-r border-slate-200/90 flex-col shrink-0 overflow-y-auto">
+        <aside className="hidden md:flex md:w-64 bg-[#0B2545] border-r border-white/10 text-white flex-col shrink-0 overflow-y-auto">
           {renderNavLinks()}
 
           {/* Footer of Sidebar */}
-          <div className="p-3 border-t border-slate-100 bg-slate-50/50">
-            <div className="text-[11px] text-slate-500 flex items-center justify-between">
+          <div className="p-3 border-t border-white/10 bg-black/20">
+            <div className="text-[11px] text-white/70 flex items-center justify-between">
               <span>Station Health</span>
-              <span className="font-semibold text-slate-900">{currentTel?.healthScore || 88} / 100</span>
+              <span className="font-semibold text-white">{currentTel?.healthScore || 88} / 100</span>
             </div>
-            <div className="mt-1.5 w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
+            <div className="mt-1.5 w-full bg-white/20 h-1.5 rounded-full overflow-hidden">
               <div
-                className="bg-emerald-600 h-full rounded-full transition-all duration-300"
+                className="bg-emerald-400 h-full rounded-full transition-all duration-300"
                 style={{ width: `${currentTel?.healthScore || 88}%` }}
               />
             </div>
